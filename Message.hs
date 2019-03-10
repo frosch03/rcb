@@ -62,13 +62,13 @@ import AuxParser
 --               Email, Valid
 type Emails = [(String, Bool)]
 
-data AuthType         = Password                      deriving (Show)
-data ResultField      = RF String String Int AuthType deriving (Show)
-data Collection       = StreamNotifyUser              deriving (Show)
-data NotificationType = Notification                  deriving (Show)
-data ChangedFieldArgs = CFA String String (String, String, (String, String, String), Char, String) deriving (Show)
-data ChangedField     = CF (String, NotificationType) [ChangedFieldArgs] deriving (Show)
-data AddedField       = AF Emails String    deriving (Show)
+data AuthType         = Password                      deriving (Eq, Show)
+data ResultField      = RF String String Int AuthType deriving (Eq, Show)
+data Collection       = StreamNotifyUser              deriving (Eq, Show)
+data NotificationType = Notification                  deriving (Eq, Show)
+data ChangedFieldArgs = CFA String String (String, String, (String, String, String), Char, String) deriving (Eq, Show)
+data ChangedField     = CF (String, NotificationType) [ChangedFieldArgs] deriving (Eq, Show)
+data AddedField       = AF Emails String    deriving (Eq, Show)
 
 data Message
 -- Write only part -----------
@@ -86,6 +86,7 @@ data Message
       | Added String String AddedField
       | Result Int ResultField
       | Changed Collection String ChangedField
+      deriving (Eq)
               
 instance Ascii (Message) where
     ascii (Pong) =

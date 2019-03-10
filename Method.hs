@@ -8,6 +8,7 @@ import Ascii
 data Method
     = Login String String Algo
     | Logout
+    deriving (Eq)
 
 instance Ascii (Method) where
     ascii (Login usr pwd SHA256) =
