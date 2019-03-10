@@ -78,6 +78,7 @@ data Message
       | AddedUserCol String String       -- Added Username id
       | SubStreamNotifyUser Int String   -- SubStreamNotifyUser Id UserId
 -- Read only part -----------
+      | Server Int
       | Ping
       | Connected String        -- Session: String
       | Ready [Int]             -- Subs: [Int]
@@ -114,6 +115,8 @@ instance Show (Message) where
     show (SubStreamNotifyUser id user) =
         "SUBSCRIBE USER NOTOFICATIONS (id: " ++ show id ++ ", userid: " ++ user ++")"
 -- --------------
+    show (Server id) =
+        "SERVER (ID:" ++ show id ++ ")"
     show (Connected s) =
         "CONNECTED (Session:" ++ s ++ ")"
     show (Ready subs) =
@@ -131,15 +134,16 @@ instance Show (Message) where
   
 
 pMessage :: GenParser Char st Message
-pMessage =
-        pPing
-    <|> pConnected
-    <|> pReady
-    <|> pUpdated
-    <|> pNosub
-    <|> pAdded
-    <|> pResult
-    <|> pChanged
+pMessage = do
+        try pPing
+    <|> try pServer
+    <|> try pConnected
+    <|> try pReady
+    <|> try pUpdated
+    <|> try pNosub
+    <|> try pAdded
+    <|> try pResult
+    <|> try pChanged
 
 instance Read (Message) where
     readsPrec p s = case parse pMessage "" s of
@@ -156,6 +160,14 @@ instance Read (AuthType) where
                       Left _  -> error $ "error while parsing AuthType"
                       Right x -> [(x, "")]
 
+
+pServer :: GenParser Char st Message
+pServer = do
+  char '{'
+  id <- pValOfKey "server_id"
+  char '}'
+  return $ Server (read id)
+  
 
 pPing :: GenParser Char st Message
 pPing = do
