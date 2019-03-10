@@ -4,6 +4,7 @@ import Ascii
 import Algo
 import Method
 import Message
+import Server
 
 import Control.Concurrent (forkIO)
 import Control.Monad (forever, unless, void, when)
