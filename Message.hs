@@ -147,7 +147,7 @@ pMessage = do
 
 instance Read (Message) where
     readsPrec p s = case parse pMessage "" s of
-                      Left _  -> error $ "error while parsing Message"
+                      Left s  -> error $ "error while parsing Message / " ++ (show s)
                       Right x -> [(x, "")]
 
 pAuthType :: GenParser Char st AuthType
