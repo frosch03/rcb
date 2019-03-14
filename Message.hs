@@ -2,6 +2,7 @@ module Message
 where
 
 import Text.ParserCombinators.Parsec
+import Text.Parsec.Perm
 
 import Ascii
 import Method
@@ -238,25 +239,45 @@ pNosub = do
 pEmail :: GenParser Char st (String, Bool)
 pEmail = do
   char '{'
-  email <- pValOfKey "address" ; char ','
-  string "\"verified\":"
-  verified <- pBool
+  result <- permute (    (\a _ b -> (a, b))
+                   <$$> (try $ pValOfKey "address")
+                   <||> (char ',')
+                   <||> (try $ pBoolOfKey "verified")
+                   )
   char '}'
-  return (email, verified)
+  return result
+
+pEmails :: GenParser Char st [(String, Bool)]
+pEmails = do
+  string "\"emails\":["
+  emails <- sepBy pEmail (char ',')
+  char ']'
+  return emails
+
+pAddedField :: GenParser Char st AddedField
+pAddedField = do
+  string "\"fields\":{"
+  (es, u) <- permute (    (\a _ b -> (a,b))
+                    <$$> (try $ pEmails)
+                    <||> (char ',')
+                    <||> (try $ pValOfKey "username")
+                    )
+  char '}'
+  return $ AF es u
 
 pAdded :: GenParser Char st Message
 pAdded = do
   char '{'
   pKeyVal ("msg", "added")            ; char ','
-  collection <- pValOfKey "collection" ; char ','
-  id         <- pValOfKey "id"         ; char ','
-  string "\"fields\":{"
-  string "\"emails\":["
-  emails <- sepBy pEmail (char ',')
-  char ']'                            ; char ','
-  username <- pValOfKey "username"
-  string "}}"
-  return (Added collection id (AF emails username))
+  (collection, id, af) <- permute
+         (    (\a _ b _ c -> (a,b,c))
+         <$$> (try $ pValOfKey "collection")
+         <||> (char ',')
+         <||> (try $ pValOfKey "id")
+         <||> (char ',')
+         <||> (try $ pAddedField)
+         )
+  return (Added collection id af)
 
 -- data AuthType         = Password
 -- data ResultField      = RF String String Int AuthType
