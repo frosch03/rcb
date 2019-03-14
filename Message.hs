@@ -56,8 +56,6 @@ import AuxParser
 --           - type :: Char -- d (direct)
 --           - message ::
 --             - msg :: String
-    
-
 
 
 --               Email, Valid
@@ -279,6 +277,30 @@ pAdded = do
          )
   return (Added collection id af)
 
+
+pTokenExpires :: GenParser Char st Int
+pTokenExpires = do
+  string "\"tokenExpires\":{\"$date\":"
+  date <- many1 $ noneOf "}" 
+  char '}'
+  return $ read date
+
+pResultField :: GenParser Char st ResultField
+pResultField = do
+  string "\"result\":{"
+  (i, tk, tke, tp) <- permute
+         (    (\a _ b _ c _ d -> (a,b,c,d))
+         <$$> (try $ pValOfKey "id")
+         <||> (char ',')
+         <||> (try $ pValOfKey "token")
+         <||> (char ',')
+         <||> (try $ pTokenExpires)
+         <||> (char ',')
+         <||> (try $ pValOfKey "type")
+         )
+  char '}'
+  return $ RF i tk tke (read tp)
+
 -- data AuthType         = Password
 -- data ResultField      = RF String String Int AuthType
 -- .. Result Int ResultField
@@ -286,43 +308,109 @@ pResult :: GenParser Char st Message
 pResult = do 
   char '{'
   pKeyVal ("msg", "result") ; char ','
-  id <- pValOfKey "id"       ; char ','
-  string "\"result\":{"
-  rid   <- pValOfKey "id"    ; char ','
-  token <- pValOfKey "token" ; char ','
-  string "\"tokenExpires\":{\"$date\":"
-  date <- many1 $ noneOf "}" 
-  char '}'                  ; char ','
-  ttype <- pValOfKey "type" 
+  (id, rf) <- permute
+         (    (\a _ b -> (a, b))
+         <$$> (try $ pValOfKey "id")
+         <||> (char ',')
+         <||> (try $ pResultField)
+         )
   char '}'
-  char '}'
-  return (Result (read id) (RF rid token (read date) (read ttype)))
+  return $ Result (read id) rf
 
-pChanged :: GenParser Char st Message
-pChanged = do -- error "TBD: Method to be defined"
-  char '{'
-  pKeyVal ("msg", "changed")           ; char ','
-  collection <- pValOfKey "collection"  ; char ','
-  id         <- pValOfKey "id"          ; char ','
-  string "\"fields\":{"
-  string "\"eventName\":\""
-  userId <- many1 $ noneOf "/"          ; char '/'
-  notifyType <- many1 $ noneOf "\""     ; string "\","
-  string "\"args\":[{"
-  title <- pValOfKey "title"            ; char ','
-  text  <- pValOfKey "text"             ; char ','
-  string "\"payload\":{"
-  id2 <- pValOfKey "_id"                ; char ','
-  rid <- pValOfKey "rid"                ; char ','
+pSender :: GenParser Char st (String, String, String)
+pSender = do
   string "\"sender\":{"
-  id3 <- pValOfKey "_id"                ; char ','
-  username <- pValOfKey "username"      ; char ','
-  name <- pValOfKey "name"              ; string "},"
-  mtype <- pValOfKey "type"             ; char ','
+  result <- permute
+         (    (\a _ b _ c -> (a,b,c))
+         <$$> (try $ pValOfKey "_id")
+         <||> (char ',')
+         <||> (try $ pValOfKey "username")
+         <||> (char ',')
+         <||> (try $ pValOfKey "name")
+         )
+  char '}'
+  return result
+
+pInnerMessage :: GenParser Char st String
+pInnerMessage = do
   string "\"message\":{"
   msg <- pValOfKey "msg"
-  string "}}}]}}"
-  return $ Changed (read collection) id (CF (userId, read notifyType) [(CFA title text (id2, rid, (id3, username, name), (head mtype), msg))])
+  char '}'
+  return msg
+
+
+pPayload :: GenParser Char st (String, String, (String, String, String), Char, String)
+pPayload = do
+  string "\"payload\":{"
+  result <- permute
+         (    (\a _ b _ c _ d _ e -> (a,b,c,(head d),e))
+         <$$> (try $ pValOfKey "_id")
+         <||> (char ',')
+         <||> (try $ pValOfKey "rid")
+         <||> (char ',')
+         <||> (try $ pSender)
+         <||> (char ',')
+         <||> (try $ pValOfKey "type")
+         <||> (char ',')
+         <||> (try $ pInnerMessage)
+         )
+  char '}'
+  return result
+
+pChangedFieldArgs :: GenParser Char st ChangedFieldArgs
+pChangedFieldArgs = do
+  char '{'
+  (s1, s2, pl) <- permute
+         (    (\a _ b _ c -> (a,b,c))
+         <$$> (try $ pValOfKey "title")
+         <||> (char ',')
+         <||> (try $ pValOfKey "text")
+         <||> (char ',')
+         <||> (try $ pPayload)
+         )
+  char '}'
+  return $ CFA s1 s2 pl
+
+pChangedFieldArgss :: GenParser Char st [ChangedFieldArgs]
+pChangedFieldArgss = do
+  string "\"args\":["
+  cfas <- sepBy pChangedFieldArgs (char ',')
+  char ']'
+  return cfas
+
+pEventName :: GenParser Char st (String, NotificationType)
+pEventName = do
+  string "\"eventName\":\""
+  userId <- many1 $ noneOf "/"          ; char '/'
+  notifyType <- many1 $ noneOf "\""     ; string "\""
+  return (userId, read notifyType)
+
+pChangedField :: GenParser Char st ChangedField
+pChangedField = do
+  string "\"fields\":{"
+  (s, n) <- permute
+         (    (\a _ b -> (a,b))
+         <$$> (try $ pEventName)
+         <||> (char ',')
+         <||> (try $ pChangedFieldArgss)
+         )
+  char '}'
+  return $ CF s n
+
+pChanged :: GenParser Char st Message
+pChanged = do
+  char '{'
+  pKeyVal ("msg", "changed")           ; char ','
+  (col, s, chg) <- permute
+         (    (\a _ b _ c -> (a,b,c))
+         <$$> (try $ pValOfKey "collection")
+         <||> (char ',')
+         <||> (try $ pValOfKey "id")
+         <||> (char ',')
+         <||> (try $ pChangedField)
+         )
+  char '}'
+  return $ Changed (read col) s chg
 
 pAddedMsg :: GenParser Char st Message
 pAddedMsg = do
