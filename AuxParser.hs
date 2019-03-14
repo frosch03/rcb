@@ -10,6 +10,12 @@ pBool
       <|> (string "false" >> return False)
       <|> (string "False" >> return False)
 
+pBoolOfKey :: String -> GenParser Char st Bool
+pBoolOfKey key = do
+  string $ "\"" ++ key ++ "\":"
+  s <- pBool
+  return (s)
+
 pQuotedString :: GenParser Char st String
 pQuotedString
     = do char '\"'
