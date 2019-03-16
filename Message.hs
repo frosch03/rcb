@@ -8,55 +8,88 @@ import Ascii
 import Method
 import AuxParser
 
--- - Messages
---   - connected \\
---     "{\"msg\":\"connected\",\"session\":\"RGKknraTEmHoaE4MP\"}"
---     - session :: String
---   - ready \\
---     "{\"msg\":\"ready\",\"subs\":[\"23\"]}"
---     - subs :: [Int]
---   - updated \\
---     "{\"msg\":\"updated\",\"methods\":[\"42\"]}"
---     - methods :: [Int]
---   - nosub \\
---     "{\"msg\":\"nosub\",\"id\":\"123\"}"
---     - id :: Int
---   - added \\
---     "{\"msg\":\"added\",\"collection\":\"users\",\"id\":\"5gBGjzg9oHMZb9DpR\",\"fields\":{\"emails\":[{\"address\":\"frosch03@frosch03.de\",\"verified\":true}],\"username\":\"frosch03\"}}"
---     - collection :: String
---     - id :: String
---     - fields ::
---       - emails :: [(String, Bool)]
---       - username :: String
---   - result \\
---     "{\"msg\":\"result\",\"id\":\"42\",\"result\":{\"id\":\"5gBGjzg9oHMZb9DpR\",\"token\":\"HjAw6Kfwr3Co-J2U7I6L6wnoAlSEKAnzWH7lyqkcK7D\",\"tokenExpires\":{\"$date\":1559406539449},\"type\":\"password\"}}"
---     - id :: Int
---     - result ::
---       - id :: String
---       - token :: String
---       - tokenExpires ::
---         - date :: Int
---       - type :: Password
---   - changed \\
---     "{\"msg\":\"changed\",\"collection\":\"stream-notify-user\",\"id\":\"id\",\"fields\":{\"eventName\":\"5gBGjzg9oHMZb9DpR/notification\",\"args\":[{\"title\":\"@admin\",\"text\":\"test\",\"payload\":{\"_id\":\"h4c9fvZhvqNLu2bSR\",\"rid\":\"5gBGjzg9oHMZb9DpRoH9xE5Zs4mvSByHm3\",\"sender\":{\"_id\":\"oH9xE5Zs4mvSByHm3\",\"username\":\"admin\",\"name\":\"Administrator\"},\"type\":\"d\",\"message\":{\"msg\":\"test\"}}}]}}"
---     - collection :: Stream-notify-user
---     - id :: String -- id
---     - fields ::
---       - eventName :: (String, Notification)
---       - args :: [
---         - title :: String
---         - text :: String
---         - payload :: 
---           - _id :: String
---           - rid :: String
---           - sender ::
---             - _id :: String
---             - username :: String -- admin
---             - name :: String -- Administrator
---           - type :: Char -- d (direct)
---           - message ::
---             - msg :: String
-
+-- |-   Messages
+-- |    -   connected
+-- |        \"{\\\"msg\\\":\\\"connected\\\",\\\"session\\\":\\\"RGKknraTEmHoaE4MP\\\"}\"
+-- |        [session]
+-- |            String
+-- |
+-- |    -   ready
+-- |        \"{\\\"msg\\\":\\\"ready\\\",\\\"subs\\\":[\\\"23\\\"]}\"
+-- |        [subs]
+-- |            [Int]
+-- |
+-- |    -   updated
+-- |        \"{\\\"msg\\\":\\\"updated\\\",\\\"methods\\\":[\\\"42\\\"]}\"
+-- |        [methods]
+-- |            [Int]
+-- |
+-- |    -   nosub
+-- |        \"{\\\"msg\\\":\\\"nosub\\\",\\\"id\\\":\\\"123\\\"}\"
+-- |        [id]
+-- |            Int
+-- |
+-- |    -   added
+-- |        \"{\\\"msg\\\":\\\"added\\\",\\\"collection\\\":\\\"users\\\",\\\"id\\\":\\\"5gBGjzg9oHMZb9DpR\\\",\\\"fields\\\":{\\\"emails\\\":[{\\\"address\\\":\\\"frosch03\@frosch03.de\\\",\\\"verified\\\":true}],\\\"username\\\":\\\"frosch03\\\"}}\"
+-- |        [collection]
+-- |            String
+-- |        [id]
+-- |            String
+-- |        [fields]
+-- |            [emails]
+-- |                [(String, Bool)]
+-- |            [username]
+-- |                String
+-- |
+-- |    -   result
+-- |        \"{\\\"msg\\\":\\\"result\\\",\\\"id\\\":\\\"42\\\",\\\"result\\\":{\\\"id\\\":\\\"5gBGjzg9oHMZb9DpR\\\",\\\"token\\\":\\\"HjAw6Kfwr3Co-J2U7I6L6wnoAlSEKAnzWH7lyqkcK7D\\\",\\\"tokenExpires\\\":{\\\"$date\\\":1559406539449},\\\"type\\\":\\\"password\\\"}}\"
+-- |        [id]
+-- |            Int
+-- |        [result]
+-- |            [id]
+-- |                String
+-- |            [token]
+-- |                String
+-- |            [tokenExpires]
+-- |                [date]
+-- |                    Int
+-- |
+-- |            [type]
+-- |                Password
+-- |
+-- |    -   changed
+-- |        \"{\\\"msg\\\":\\\"changed\\\",\\\"collection\\\":\\\"stream-notify-user\\\",\\\"id\\\":\\\"id\\\",\\\"fields\\\":{\\\"eventName\\\":\\\"5gBGjzg9oHMZb9DpR\/notification\\\",\\\"args\\\":[{\\\"title\\\":\\\"\@admin\\\",\\\"text\\\":\\\"test\\\",\\\"payload\\\":{\\\"_id\\\":\\\"h4c9fvZhvqNLu2bSR\\\",\\\"rid\\\":\\\"5gBGjzg9oHMZb9DpRoH9xE5Zs4mvSByHm3\\\",\\\"sender\\\":{\\\"_id\\\":\\\"oH9xE5Zs4mvSByHm3\\\",\\\"username\\\":\\\"admin\\\",\\\"name\\\":\\\"Administrator\\\"},\\\"type\\\":\\\"d\\\",\\\"message\\\":{\\\"msg\\\":\\\"test\\\"}}}]}}\"
+-- |        [collection]
+-- |            Stream-notify-user
+-- |        [id]
+-- |            String – id
+-- |        [fields]
+-- |            [eventName]
+-- |                (String, Notification)
+-- |            [args]
+-- |                [
+-- |                [title]
+-- |                    String
+-- |                [text]
+-- |                    String
+-- |                [payload]
+-- |                    [id]
+-- |                        String
+-- |                    [rid]
+-- |                        String
+-- |                    [sender]
+-- |                        [id]
+-- |                            String
+-- |                        [username]
+-- |                            String – admin
+-- |                        [name]
+-- |                            String – Administrator
+-- |
+-- |                    [type]
+-- |                        Char – d (direct)
+-- |                    [message]
+-- |                        [msg]
+-- |                            String
 
 --               Email, Valid
 type Emails = [(String, Bool)]
