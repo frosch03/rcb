@@ -3,6 +3,8 @@ where
 
 import Text.ParserCombinators.Parsec
 import Text.Parsec.Perm
+import Data.List (intercalate)
+
 import AuxParser
 import Aux
 import Algo
@@ -19,14 +21,26 @@ data Method
 
 instance Ascii (Method) where
     ascii (Login usr pwd SHA256) =
-        "\"method\": \"login\",\"params\":[{\"user\": { \"username\": " ++ (show usr) ++
-        " },\"password\": {\"digest\": " ++ (show . sha256hash $ pwd) ++
+        "\"method\":\"login\",\"params\":[{\"user\":{\"username\":" ++ (show usr) ++
+        "},\"password\":{\"digest\":" ++ (show . sha256hash $ pwd) ++
         ",\"algorithm\":\"" ++ (ascii SHA256) ++
         "\"}}]"
+    ascii (SendMsg msgs) =
+        "\"method\":\"sendMessage\",\"params\":[" ++
+        (intercalate "," . map fn $ msgs) ++ "]"
+            where
+              fn (i,r,m) = "{\"_id\":\"" ++ i ++ "\",\"rid\":\"" ++ r ++ "\",\"msg\":\"" ++ m ++ "\"}"
 
 instance Show (Method) where
     show (Login usr pwd _) =
         "Login: " ++ usr ++ "(" ++ hidePw pwd ++ ")"
+    show (SendMsg msgs) =
+        "SendMsg" ++ (intercalate "; SendMsg" . map fn $ msgs)
+            where
+              fn (i,r,m) = "(ID:" ++ i ++ ", RID:" ++ r ++ "): " ++ m
+    show (Logout) =
+        "Logout"
+
 pMethod :: GenParser Char st Method
 pMethod = do
       try pLogin

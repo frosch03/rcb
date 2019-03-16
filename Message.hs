@@ -94,8 +94,8 @@ instance Ascii (Message) where
     ascii (Con ver sup) =
         "{\"msg\": \"connect\", \"version\":\"" ++ (show ver) ++
         "\",\"support\": [\"" ++ (show sup) ++ "\"]}"
-    ascii (Mtd mtd) =
-        "{\"msg\": \"method\",\"id\":\"23\"," ++ (ascii mtd) ++ "}"
+    ascii (Mtd id mtd) =
+        "{\"msg\": \"method\",\"id\":\"" ++ (show id) ++"\"," ++ (ascii mtd) ++ "}"
     ascii (Nosub id) =
         "{\"msg\":\"nosub\",\"id\":\"" ++ show id ++ "\"}"
     ascii (SubStreamNotifyUser id user) =
@@ -109,8 +109,8 @@ instance Show (Message) where
         "PONG"
     show (Con v s) =
         "Connect (version: " ++ show v ++ ", support: " ++ show s ++ ")"
-    show (Mtd m) =
-        show m
+    show (Mtd id m) =
+        "METHOD (id: )" ++ (show id) ++ ", " ++ (show m)
     show (SubStreamNotifyUser id user) =
         "SUBSCRIBE USER NOTOFICATIONS (id: " ++ show id ++ ", userid: " ++ user ++")"
 -- --------------
