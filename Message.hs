@@ -73,7 +73,7 @@ data Message
 -- Write only part -----------
       = Pong
       | Con Int Int
-      | Mtd Method
+      | Mtd Int Method
       | AddedUserCol String String       -- Added Username id
       | SubStreamNotifyUser Int String   -- SubStreamNotifyUser Id UserId
 -- Read only part -----------
@@ -143,6 +143,7 @@ pMessage = do
     <|> try pAdded
     <|> try pResult
     <|> try pChanged
+    <|> try pMtd
 
 instance Read (Message) where
     readsPrec p s = case parse pMessage "" s of
@@ -166,6 +167,21 @@ pServer = do
   id <- pValOfKey "server_id"
   char '}'
   return $ Server (read id)
+  
+
+pMtd :: GenParser Char st Message
+pMtd = do
+  char '{'
+  (id, methd) <- permute
+    (    (\_ _ a _ b -> (a,b))
+    <$$> (try $ pKeyVal ("msg", "method"))
+    <||> (char ',')
+    <||> (try $ pValOfKey "id")
+    <||> (char ',')
+    <||> (try $ pMethod)
+    )
+  char '}'
+  return $ Mtd (read id) methd
   
 
 pPing :: GenParser Char st Message
