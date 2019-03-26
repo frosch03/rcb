@@ -1,4 +1,5 @@
 > module Configuration where
+> import Network.Socket (PortNumber)
 > import Message
 > import Method
 > import Algo

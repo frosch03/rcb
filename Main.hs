@@ -14,5 +14,5 @@ reactiveWS c = do
   reactimate (initialize c) (sense c) (actuate c) process
 
 main :: IO ()
-main = runSecureClient rct_server 443 rct_path reactiveWS
+main = runSecureClient rct_server rct_port rct_path reactiveWS
 
