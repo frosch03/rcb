@@ -1,0 +1,13 @@
+#+Title: Functional Reactive Rocket.Chat Bot
+
+* Description
+The following implementation is a simple implementation of a
+rocket.chat client that can work as a chat bot. 
+
+It is written in the functional reactive programming style with the
+help of haskells [[https://wiki.haskell.org/Yampa][yampa]] framework
+
+* Configuration
+Just copy the attached [[https://github.com/frosch03/rct/blob/master/Configuration.lhs.sample][sample configuration]] into the file
+`Configuration.lhs` and enter each of the empty values with a
+meaningful one
