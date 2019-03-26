@@ -63,19 +63,17 @@ pSendMsgParam = do
   return result 
 
 
-pSendMsgParams :: GenParser Char st [(String, String, String)]
-pSendMsgParams = pValOfParams pSendMsgParam
-
-
 pSendMsg :: GenParser Char st Method
 pSendMsg = do
-  result <- permute
-    (    (\_ _ b -> (b))
+  (i, smp) <- permute
+    (    (\_ _ b _ c -> (b, c))
     <$$> (try $ pKeyVal ("method", "sendMessage"))
     <||> (char ',')
-    <||> (try $ pSendMsgParams)
+    <||> (try $ pValOfKey "id")
+    <||> (char ',')
+    <||> (try $ pParams pSendMsgParam)
     )
-  return $ SendMsg result
+  return $ SendMsg (read i) smp
 
 pLogout :: GenParser Char st Method
 pLogout = do
@@ -94,8 +92,8 @@ pPassword = do
   char '}'
   return (pw, read algo)
 
-pUser :: GenParser Char st String
-pUser = do 
+pUsername :: GenParser Char st String
+pUsername = do 
   string "\"user\":{"
   usr <- pValOfKey "username"
   char '}'
@@ -106,28 +104,24 @@ pLoginParam = do
   char '{'
   result <- permute
     (    (\a _ b -> (a,b))
-    <$$> (try $ pUser)
+    <$$> (try $ pUsername)
     <||> (char ',')
     <||> (try $ pPassword)
     )
   char '}'
   return result
 
-pLoginParams :: GenParser Char st [(String, (String, Algo))]
-pLoginParams = pValOfParams pLoginParam
-  -- string "\"params\":["
-  -- lp <- sepBy pLoginParam (char ',')
-  -- char ']'
-  -- return lp
 
 pLogin :: GenParser Char st Method
 pLogin = do
-  result <- permute
-    (    (\_ _ b -> (b))
+  (i, lp) <- permute
+    (    (\_ _ b _ c -> (b,c))
     <$$> (try $ pKeyVal ("method", "login"))
     <||> (char ',')
-    <||> (try $ pLoginParams)
+    <||> (try $ pValOfKey "id")
+    <||> (char ',')
+    <||> (try $ pParams pLoginParam)
     )
-  return $ (\((usr, (pw, algo)):_) -> Login usr pw algo) result
+  return $ (\((usr, (pw, algo)):_) -> Login (read i) usr pw algo) lp
   
   

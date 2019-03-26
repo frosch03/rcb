@@ -168,6 +168,7 @@ instance Show (Message) where
 pMessage :: GenParser Char st Message
 pMessage = do
         try pPing
+    <|> try pError
     <|> try pServer
     <|> try pConnected
     <|> try pReady
@@ -194,6 +195,14 @@ instance Read (AuthType) where
                       Right x -> [(x, "")]
 
 
+pError :: GenParser Char st Message
+pError = do
+  char '{'
+  pKeyVal ("msg", "error") ; char ','
+  reason <- pValOfKey "reason"
+  char '}'
+  return $ Error reason
+
 pServer :: GenParser Char st Message
 pServer = do
   char '{'
@@ -205,16 +214,10 @@ pServer = do
 pMtd :: GenParser Char st Message
 pMtd = do
   char '{'
-  (id, methd) <- permute
-    (    (\_ _ a _ b -> (a,b))
-    <$$> (try $ pKeyVal ("msg", "method"))
-    <||> (char ',')
-    <||> (try $ pValOfKey "id")
-    <||> (char ',')
-    <||> (try $ pMethod)
-    )
+  pKeyVal ("msg", "method") ; char ','
+  methd <- pMethod
   char '}'
-  return $ Mtd (read id) methd
+  return $ Mtd methd
   
 
 pPing :: GenParser Char st Message
@@ -249,7 +252,7 @@ instance Read (NotificationType) where
 pConnected :: GenParser Char st Message
 pConnected = do
   char '{'
-  pKeyVal ("msg", "connected") >> char ','
+  pKeyVal ("msg", "connected") ; char ','
   session <- pValOfKey "session"
   char '}'
   return (Connected session)
@@ -327,12 +330,94 @@ pAdded = do
   return (Added collection id af)
 
 
+pDollarDate :: String -> GenParser Char st Int
+pDollarDate name = do
+  string $ "\"" ++ name ++ "\":{\"$date\":"
+  date <- many digit
+  char '}'
+  return $ read date
+
 pTokenExpires :: GenParser Char st Int
 pTokenExpires = do
   string "\"tokenExpires\":{\"$date\":"
-  date <- many1 $ noneOf "}" 
+  -- date <- many1 $ noneOf "}" 
+  date <- many digit
   char '}'
   return $ read date
+
+
+-- "{\"msg\":\"result\",\"id\":\"42\",\"result\":{\"_id\":\"6\",\"rid\":\"5gBGjzg9oHMZb9DpRdNfBQiWGorDmHwWXR\",\"msg\":\"Hello\",\"ts\":{\"$date\":1552737969353},\"u\":{\"_id\":\"dNfBQiWGorDmHwWXR\",\"username\":\"lambdabot\",\"name\":\"lambdabot\"},\"_updatedAt\":{\"$date\":1552737969370},\"mentions\":[],\"channels\":[]}}"
+-- result :: (RF2)
+--   _id :: String / Int
+--   rid :: String
+--   msg :: String
+--   ts  ::
+--     $date :: Int
+--   u   ::
+--     _id      :: String
+--     username :: String
+--     name     :: String
+--   _updatedAt ::
+--     $date :: Int
+--   mentions :: []
+--     --
+--   channels :: []
+--     --
+
+pResultField2 :: GenParser Char st ResultField
+pResultField2 = do
+  string "\"result\":{"
+  (id1, rid, msg, date1, u, date2) <- permute
+    (    (\a _ b _ c _ d _ e _ f _ _ _ _ -> (a,b,c,d,e,f))
+    <$$> (try $ pValOfKey "_id")
+    <||> (char ',') 
+    <||> (try $ pValOfKey "rid") 
+    <||> (char ',') 
+    <||> (try $ pValOfKey "msg")
+    <||> (char ',') 
+    <||> (try $ pDollarDate "ts")
+    <||> (char ',') 
+    <||> (try $ string "\"u\":" >> pUser)
+    <||> (char ',') 
+    <||> (try $ pDollarDate "_updatedAt")
+    <||> (char ',') 
+    <||> (try $ string "\"mentions\":[]")
+    <||> (char ',') 
+    <||> (try $ string "\"channels\":[]")
+    )
+  char '}'
+  return $ RF2 id1 rid msg date1 u date2
+--         RF2 String String String (Int) (String, String, String) (Int) -- [a] [a]
+
+
+-- "{\"msg\":\"result\",\"id\":\"42\",\"error\":{\"isClientSafe\":true,\"error\":500,\"reason\":\"Internal server error\",\"message\":\"Internal server error [500]\",\"errorType\":\"Meteor.Error\"}}"
+-- error :: (ER)
+--   isClientSafe :: Bool
+--   error        :: Int
+--   reason       :: String
+--   message      :: String
+--   errorType    :: String
+
+pResultFieldError :: GenParser Char st ResultField
+pResultFieldError = do
+  string "\"error\":{"
+  (safe, erno, reason, msg, typ) <- permute
+    (    (\a _ b _ c _ d _ e -> (a,b,c,d,e))
+    <$$> (try $ pBoolOfKey "isClientSafe")
+    <||> (char ',')
+    <||> (try $ pIntOfKey "error")
+    <||> (char ',')
+    <||> (try $ pValOfKey "reason")
+    <||> (char ',')
+    <||> (try $ pValOfKey "message")
+    <||> (char ',')
+    <||> (try $ pValOfKey "errorType")
+    )
+  char '}'
+  return $ ER safe erno reason msg typ
+--         ER Bool Int String String String
+
+
 
 pResultField :: GenParser Char st ResultField
 pResultField = do
@@ -361,14 +446,20 @@ pResult = do
          (    (\a _ b -> (a, b))
          <$$> (try $ pValOfKey "id")
          <||> (char ',')
-         <||> (try $ pResultField)
+         <||> (try pResultField <|> try pResultField2 <|> try pResultFieldError)
          )
   char '}'
   return $ Result (read id) rf
 
 pSender :: GenParser Char st (String, String, String)
 pSender = do
-  string "\"sender\":{"
+  string "\"sender\":"
+  result <- pUser
+  return result
+
+pUser :: GenParser Char st (String, String, String)
+pUser = do 
+  char '{'
   result <- permute
          (    (\a _ b _ c -> (a,b,c))
          <$$> (try $ pValOfKey "_id")

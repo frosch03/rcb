@@ -16,6 +16,12 @@ pBoolOfKey key = do
   s <- pBool
   return (s)
 
+pIntOfKey :: String -> GenParser Char st Int
+pIntOfKey key = do
+  string $ "\"" ++ key ++ "\":"
+  i <- many digit
+  return (read i)
+
 pQuotedString :: GenParser Char st String
 pQuotedString
     = do char '\"'
@@ -39,8 +45,9 @@ pValOfKey key = do
   s <- pQuotedString
   return (s)
 
-pValOfParams :: (GenParser Char st a) -> GenParser Char st [a]
-pValOfParams parser = do
+
+pParams :: (GenParser Char st a) -> GenParser Char st [a]
+pParams parser = do
   string "\"params\":["
   xs <- sepBy parser (char ',')
   char ']'
@@ -60,3 +67,9 @@ pUsernameFromFields = do
   many1 (noneOf "]")          ; char ']'
   char '}'
   return user
+
+
+-- instance Read (Bool) where
+--     readsPrec p s = case parse pBool "" s of
+--                       Left _  -> error $ "error while parsing Bool"
+--                       Right x -> [(x, "")]
