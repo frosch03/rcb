@@ -95,7 +95,10 @@ import AuxParser
 type Emails = [(String, Bool)]
 
 data AuthType         = Password                      deriving (Eq, Show)
-data ResultField      = RF String String Int AuthType deriving (Eq, Show)
+data ResultField      = RF  String String Int AuthType
+                      | RF2 String String String (Int) (String, String, String) (Int) -- [a] [a]
+                      | ER  Bool Int String String String
+                        deriving (Eq, Show)
 data Collection       = StreamNotifyUser              deriving (Eq, Show)
 data NotificationType = Notification                  deriving (Eq, Show)
 data ChangedFieldArgs = CFA String String (String, String, (String, String, String), Char, String) deriving (Eq, Show)
@@ -106,10 +109,11 @@ data Message
 -- Write only part -----------
       = Pong
       | Con Int Int
-      | Mtd Int Method
+      | Mtd Method
       | AddedUserCol String String       -- Added Username id
       | SubStreamNotifyUser Int String   -- SubStreamNotifyUser Id UserId
 -- Read only part -----------
+      | Error String
       | Server Int
       | Ping
       | Connected String        -- Session: String
@@ -127,8 +131,8 @@ instance Ascii (Message) where
     ascii (Con ver sup) =
         "{\"msg\": \"connect\", \"version\":\"" ++ (show ver) ++
         "\",\"support\": [\"" ++ (show sup) ++ "\"]}"
-    ascii (Mtd id mtd) =
-        "{\"msg\": \"method\",\"id\":\"" ++ (show id) ++"\"," ++ (ascii mtd) ++ "}"
+    ascii (Mtd mtd) =
+        "{\"msg\": \"method\"," ++ (ascii mtd) ++ "}"
     ascii (Nosub id) =
         "{\"msg\":\"nosub\",\"id\":\"" ++ show id ++ "\"}"
     ascii (SubStreamNotifyUser id user) =
@@ -142,11 +146,13 @@ instance Show (Message) where
         "PONG"
     show (Con v s) =
         "Connect (version: " ++ show v ++ ", support: " ++ show s ++ ")"
-    show (Mtd id m) =
-        "METHOD (id: )" ++ (show id) ++ ", " ++ (show m)
+    show (Mtd m) =
+        "METHOD " ++ (show m)
     show (SubStreamNotifyUser id user) =
         "SUBSCRIBE USER NOTOFICATIONS (id: " ++ show id ++ ", userid: " ++ user ++")"
 -- --------------
+    show (Error reason) =
+        "ERROR (" ++ reason ++ ")"
     show (Server id) =
         "SERVER (ID:" ++ show id ++ ")"
     show (Connected s) =

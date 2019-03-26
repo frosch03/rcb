@@ -14,28 +14,30 @@ type MsgId = String
 type RoomId = String
 
 data Method
-    = Login String String Algo
-    | SendMsg [(MsgId, RoomId, String)]
+    = Login Int String String Algo
+    | SendMsg Int [(MsgId, RoomId, String)]
     | Logout
     deriving (Eq)
 
 instance Ascii (Method) where
-    ascii (Login usr pwd SHA256) =
-        "\"method\":\"login\",\"params\":[{\"user\":{\"username\":" ++ (show usr) ++
+    ascii (Login id usr pwd SHA256) =
+        "\"method\":\"login\",\"id\":\"" ++ show id ++
+        "\",\"params\":[{\"user\":{\"username\":" ++ (show usr) ++
         "},\"password\":{\"digest\":" ++ (show . sha256hash $ pwd) ++
         ",\"algorithm\":\"" ++ (ascii SHA256) ++
         "\"}}]"
-    ascii (SendMsg msgs) =
-        "\"method\":\"sendMessage\",\"params\":[" ++
+    ascii (SendMsg id msgs) =
+        "\"method\":\"sendMessage\",\"id\":\"" ++ show id ++
+        ",\"params\":[" ++
         (intercalate "," . map fn $ msgs) ++ "]"
             where
               fn (i,r,m) = "{\"_id\":\"" ++ i ++ "\",\"rid\":\"" ++ r ++ "\",\"msg\":\"" ++ m ++ "\"}"
 
 instance Show (Method) where
-    show (Login usr pwd _) =
-        "Login: " ++ usr ++ "(" ++ hidePw pwd ++ ")"
-    show (SendMsg msgs) =
-        "SendMsg" ++ (intercalate "; SendMsg" . map fn $ msgs)
+    show (Login id usr pwd _) =
+        "(id:" ++ show id ++ ") Login " ++ usr ++ "(" ++ hidePw pwd ++ ")"
+    show (SendMsg id msgs) =
+        "(id:" ++ show id ++ ") SendMsg " ++ (intercalate "; SendMsg" . map fn $ msgs)
             where
               fn (i,r,m) = "(ID:" ++ i ++ ", RID:" ++ r ++ "): " ++ m
     show (Logout) =
