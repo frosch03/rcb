@@ -46,4 +46,7 @@ actuate c _ (Just (rid, s)) = do
     ("exit") -> return True    -- True means end
     ("fefe") -> lastNfefe (sendTextData c . pack . ascii . mkSendMsg mid rid) s >> return False
     ("xkcd") -> lastNxkcd (sendTextData c . pack . ascii . mkSendMsg mid rid) s >> return False
+    ("heise") -> lastNheise (sendTextData c . pack . ascii . mkSendMsg mid rid) s >> return False
+    ("golem") -> lastNgolem (sendTextData c . pack . ascii . mkSendMsg mid rid) s >> return False
+    ("hackernews") -> lastNhackernews (sendTextData c . pack . ascii . mkSendMsg mid rid) s >> return False
     otherwise -> putStrLn s >> return False
