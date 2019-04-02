@@ -34,7 +34,7 @@ instance Ascii (Method) where
         "\"}}]"
     ascii (SendMsg id msgs) =
         "\"method\":\"sendMessage\",\"id\":\"" ++ show id ++
-        ",\"params\":[" ++
+        "\",\"params\":[" ++
         (intercalate "," . map fn $ msgs) ++ "]"
             where
               fn (i,r,m) = "{\"_id\":\"" ++ i ++ "\",\"rid\":\"" ++ r ++ "\",\"msg\":\"" ++ m ++ "\"}"
