@@ -57,6 +57,7 @@ import AuxParser
 -- |            [type]
 -- |                Password
 -- |
+-- "{\"msg\":\"result\",\"id\":\"75392\",\"result\":{\"_id\":\"087851f6c85844dabf972c87bb758c5746b74f1322555babfc69e39ddb003ce0\",\"rid\":\"5gBGjzg9oHMZb9DpRdNfBQiWGorDmHwWXR\",\"msg\":\"75392 [der ORF zieht sich von Facebook zurck.Das sollten ...](http://blog.fefe.de/?ts=a260a82b)\",\"ts\":{\"$date\":1553892993456},\"u\":{\"_id\":\"dNfBQiWGorDmHwWXR\",\"username\":\"lambdabot\",\"name\":\"lambdabot\"},\"_updatedAt\":{\"$date\":1553892993465},\"urls\":[{\"url\":\"http://blog.fefe.de/?ts=a260a82b\"}],\"mentions\":[],\"channels\":[]}}"
 -- |    -   changed
 -- |        \"{\\\"msg\\\":\\\"changed\\\",\\\"collection\\\":\\\"stream-notify-user\\\",\\\"id\\\":\\\"id\\\",\\\"fields\\\":{\\\"eventName\\\":\\\"5gBGjzg9oHMZb9DpR\/notification\\\",\\\"args\\\":[{\\\"title\\\":\\\"\@admin\\\",\\\"text\\\":\\\"test\\\",\\\"payload\\\":{\\\"_id\\\":\\\"h4c9fvZhvqNLu2bSR\\\",\\\"rid\\\":\\\"5gBGjzg9oHMZb9DpRoH9xE5Zs4mvSByHm3\\\",\\\"sender\\\":{\\\"_id\\\":\\\"oH9xE5Zs4mvSByHm3\\\",\\\"username\\\":\\\"admin\\\",\\\"name\\\":\\\"Administrator\\\"},\\\"type\\\":\\\"d\\\",\\\"message\\\":{\\\"msg\\\":\\\"test\\\"}}}]}}\"
 -- |        [collection]
@@ -91,39 +92,165 @@ import AuxParser
 -- |                        [msg]
 -- |                            String
 
---               Email, Valid
-type Emails = [(String, Bool)]
+-- Send Message:
+-- {"msg":"method","method":"sendMessage","id":"42","params":[{"_id":"8","rid":"5gBGjzg9oHMZb9DpRdNfBQiWGorDmHwWXR","msg":"Hello"}]}
 
-data AuthType         = Password                      deriving (Eq, Show)
-data ResultField      = RF  String String Int AuthType
-                      | RF2 String String String (Int) (String, String, String) (Int) -- [a] [a]
-                      | ER  Bool Int String String String
-                        deriving (Eq, Show)
-data Collection       = StreamNotifyUser              deriving (Eq, Show)
-data NotificationType = Notification                  deriving (Eq, Show)
-data ChangedFieldArgs = CFA String String (String, String, (String, String, String), Char, String) deriving (Eq, Show)
-data ChangedField     = CF (String, NotificationType) [ChangedFieldArgs] deriving (Eq, Show)
-data AddedField       = AF Emails String    deriving (Eq, Show)
+-- "{\"msg\":\"result\",\"id\":\"42\",\"result\":{\"_id\":\"6\",\"rid\":\"5gBGjzg9oHMZb9DpRdNfBQiWGorDmHwWXR\",\"msg\":\"Hello\",\"ts\":{\"$date\":1552737969353},\"u\":{\"_id\":\"dNfBQiWGorDmHwWXR\",\"username\":\"lambdabot\",\"name\":\"lambdabot\"},\"_updatedAt\":{\"$date\":1552737969370},\"mentions\":[],\"channels\":[]}}"
+-- result :: (RF2)
+--   _id :: String / Int
+--   rid :: String
+--   msg :: String
+--   ts  ::
+--     $date :: Int
+--   u   ::
+--     _id      :: String
+--     username :: String
+--     name     :: String
+--   _updatedAt ::
+--     $date :: Int
+--   mentions :: []
+--     --
+--   channels :: []
+--     --
+
+-- "{\"msg\":\"result\",\"id\":\"42\",\"error\":{\"isClientSafe\":true,\"error\":500,\"reason\":\"Internal server error\",\"message\":\"Internal server error [500]\",\"errorType\":\"Meteor.Error\"}}"
+-- error :: (ER)
+--   isClientSafe :: Bool
+--   error        :: Int
+--   reason       :: String
+--   message      :: String
+--   errorType    :: String
+--                       | ER  Bool Int String String String
+
+-- "{\"msg\":\"result\",\"id\":\"42\",\"error\":{\"isClientSafe\":true,\"error\":500,\"reason\":\"Internal server error\",\"message\":\"Internal server error [500]\",\"errorType\":\"Meteor.Error\"}}"
+
+
+--               Email, Valid
+type Emails
+    = [(String, Bool)]
+
+data AuthType
+    = Password
+    deriving (Eq, Show)
+
+data ResultField
+    = RF
+      { rfId           :: String
+      , rfToken        :: String
+      , rfTokenExpires :: Int
+      , rfType         :: AuthType
+      }
+    | RF2
+      { rf2_Id        :: String
+      , rf2rId        :: String
+      , rf2msg        :: String
+      , rf2Ts         :: (Int)
+      , rf2U          :: (String, String, String)
+      , rf2_updatedAt :: (Int)
+      } -- [a] [a]
+    | RF3
+      { rf3_Id        :: String
+      , rf3rId        :: String
+      , rf3msg        :: String
+      , rf3Ts         :: (Int)
+      , rf3U          :: (String, String, String)
+      , rf3_updatedAt :: (Int)
+      , rf3_urls      :: [String]
+      , rf3_mentions  :: [String]
+      , rf3_channels  :: [String]
+      }
+    | ER
+      { erIsClientSafe :: Bool
+      , erError        :: Int
+      , erReason       :: String
+      , erMessage      :: String
+      , erErrorType    :: String
+      }
+    deriving (Eq, Show)
+
+data Collection
+    = StreamNotifyUser
+    deriving (Eq, Show)
+
+data NotificationType
+    = Notification
+    deriving (Eq, Show)
+
+data ChangedFieldArgs
+    = CFA
+      { cfaTitle   :: String
+      , cfaText    :: String
+      , cfaPayload :: (String, String, (String, String, String), Char, String)
+      }
+    deriving (Eq, Show)
+
+data ChangedField
+    = CF
+      { cfEventName :: (String, NotificationType)
+      , cfArgs      :: [ChangedFieldArgs]
+      }
+    deriving (Eq, Show)
+
+data AddedField
+    = AF Emails String
+    deriving (Eq, Show)
+
+mkSendMsg :: Int -> RoomId -> String -> Message
+mkSendMsg id rid text = Mtd (mkSendMethod id rid text)
 
 data Message
 -- Write only part -----------
-      = Pong
-      | Con Int Int
-      | Mtd Method
-      | AddedUserCol String String       -- Added Username id
-      | SubStreamNotifyUser Int String   -- SubStreamNotifyUser Id UserId
+    = Pong
+    | Con
+      { conVersion             :: Int
+      , conSupport             :: Int
+      }
+    | Mtd
+      { method                 :: Method
+      }
+    | AddedUserCol
+      { addedUserColId         :: String
+      , addedUserColUsername   :: String
+      }       -- Added Username id
+    | SubStreamNotifyUser
+      { streamNotifyUserId     :: Int
+      , streamNotifyUserUserId :: String
+      }   -- SubStreamNotifyUser Id UserId
 -- Read only part -----------
-      | Error String
-      | Server Int
-      | Ping
-      | Connected String        -- Session: String
-      | Ready [Int]             -- Subs: [Int]
-      | Updated [Int]           -- Methods: [Int]
-      | Nosub Int
-      | Added String String AddedField
-      | Result Int ResultField
-      | Changed Collection String ChangedField
-      deriving (Eq)
+    | Error
+      { errorReason            :: String
+      }
+    | Server
+      { serverId               :: Int
+      }
+    | Ping
+    | Connected
+      { connectedSession       :: String
+      }        -- Session: String
+    | Ready
+      { readySubs              :: [Int]
+      }             -- Subs: [Int]
+    | Updated
+      { updatedMethods         :: [Int]
+      }           -- Methods: [Int]
+    | Nosub
+      { nosubId                :: Int
+      }
+    | Added
+      { addedCollection        :: String
+      , addedId                :: String
+      , addedField             :: AddedField
+      }
+    | Result
+      { resultId               :: Int
+      , resultField            :: ResultField
+      }
+    | Changed
+      { changedCollection      :: Collection
+      , changedId              :: String
+      , changedField           :: ChangedField
+      }
+    deriving (Eq)
               
 instance Ascii (Message) where
     ascii (Pong) =
@@ -289,6 +416,13 @@ pNosub = do
   char '}'
   return (Nosub $ read id)
 
+-- pField :: [GenParser Char st a] -> GenParser Char st [a]
+-- pField ps = do
+--   char '{'
+--   result <- sepBy (choice . map try $ ps) (char ',')
+--   char '}'
+--   return result
+
 --  | Added String String AddedField
 -- data AddedField       = AF [(String, Bool)] String
 
@@ -393,7 +527,46 @@ pResultField2 = do
     )
   char '}'
   return $ RF2 id1 rid msg date1 u date2
---         RF2 String String String (Int) (String, String, String) (Int) -- [a] [a]
+
+pUrl :: GenParser Char st String
+pUrl = do
+  char '{'
+  url <- pValOfKey "url"
+  char '}'
+  return url
+
+pUrls :: GenParser Char st [String]
+pUrls = do
+  string "\"urls\":["
+  urls <- sepBy pUrl (char ',')
+  char ']'
+  return urls
+
+pResultField3 :: GenParser Char st ResultField
+pResultField3 = do
+  string "\"result\":{"
+  (id1, rid, msg, date1, u, date2, urls) <- permute
+    (    (\a _ b _ c _ d _ e _ f _ g _ _ _ _ -> (a,b,c,d,e,f,g))
+    <$$> (try $ pValOfKey "_id")
+    <||> (char ',') 
+    <||> (try $ pValOfKey "rid") 
+    <||> (char ',') 
+    <||> (try $ pValOfKey "msg")
+    <||> (char ',') 
+    <||> (try $ pDollarDate "ts")
+    <||> (char ',') 
+    <||> (try $ string "\"u\":" >> pUser)
+    <||> (char ',') 
+    <||> (try $ pDollarDate "_updatedAt")
+    <||> (char ',') 
+    <||> (try $ pUrls)
+    <||> (char ',') 
+    <||> (try $ string "\"mentions\":[]")
+    <||> (char ',') 
+    <||> (try $ string "\"channels\":[]")
+    )
+  char '}'
+  return $ RF3 id1 rid msg date1 u date2 urls [] []
 
 
 -- "{\"msg\":\"result\",\"id\":\"42\",\"error\":{\"isClientSafe\":true,\"error\":500,\"reason\":\"Internal server error\",\"message\":\"Internal server error [500]\",\"errorType\":\"Meteor.Error\"}}"
@@ -441,6 +614,9 @@ pResultField = do
   char '}'
   return $ RF i tk tke (read tp)
 
+         
+-- "{\"msg\":\"result\",\"id\":\"42\",\"result\":{\"_id\":\"6\",\"rid\":\"5gBGjzg9oHMZb9DpRdNfBQiWGorDmHwWXR\",\"msg\":\"Hello\",\"ts\":{\"$date\":1552737969353},\"u\":{\"_id\":\"dNfBQiWGorDmHwWXR\",\"username\":\"lambdabot\",\"name\":\"lambdabot\"},\"_updatedAt\":{\"$date\":1552737969370},\"mentions\":[],\"channels\":[]}}"
+
 -- data AuthType         = Password
 -- data ResultField      = RF String String Int AuthType
 -- .. Result Int ResultField
@@ -452,7 +628,7 @@ pResult = do
          (    (\a _ b -> (a, b))
          <$$> (try $ pValOfKey "id")
          <||> (char ',')
-         <||> (try pResultField <|> try pResultField2 <|> try pResultFieldError)
+         <||> (try pResultField <|> try pResultField2 <|> try pResultField3 <|> try pResultFieldError)
          )
   char '}'
   return $ Result (read id) rf

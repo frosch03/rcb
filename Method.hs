@@ -19,6 +19,12 @@ data Method
     | Logout
     deriving (Eq)
 
+mkSendMethod :: Int -> RoomId -> String -> Method
+mkSendMethod id rid text =
+    SendMsg id [(mid, rid, text)]
+    where
+      mid = sha256hash $ text ++ show id
+
 instance Ascii (Method) where
     ascii (Login id usr pwd SHA256) =
         "\"method\":\"login\",\"id\":\"" ++ show id ++
