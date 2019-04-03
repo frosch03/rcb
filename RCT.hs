@@ -41,7 +41,7 @@ actuate :: Connection -> Bool -> Maybe (Method.RoomId, String) -> IO Bool
 actuate c _ Nothing = return False
 actuate c _ (Just (rid, s)) = do
   mid <- secondsOfTheDay
-  let sendToRC = (sendTextData c . pack . ascii . mkSendMsg mid rid)
+  let sendToRC = sendTextData c . pack . ascii . mkSendMsg mid rid
   case (head . words $ s) of
     ("exit") -> return True    -- True means end
     ("fefe") -> lastNfefe sendToRC s >> return False
