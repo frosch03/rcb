@@ -40,13 +40,13 @@ sense c _ = do
 actuate :: Connection -> Bool -> Maybe (Method.RoomId, String) -> IO Bool
 actuate c _ Nothing = return False
 actuate c _ (Just (rid, s)) = do
-  let x = False
   mid <- secondsOfTheDay
+  let sendToRC = (sendTextData c . pack . ascii . mkSendMsg mid rid)
   case (head . words $ s) of
     ("exit") -> return True    -- True means end
-    ("fefe") -> lastNfefe (sendTextData c . pack . ascii . mkSendMsg mid rid) s >> return False
-    ("xkcd") -> lastNxkcd (sendTextData c . pack . ascii . mkSendMsg mid rid) s >> return False
-    ("heise") -> lastNheise (sendTextData c . pack . ascii . mkSendMsg mid rid) s >> return False
-    ("golem") -> lastNgolem (sendTextData c . pack . ascii . mkSendMsg mid rid) s >> return False
-    ("hackernews") -> lastNhackernews (sendTextData c . pack . ascii . mkSendMsg mid rid) s >> return False
+    ("fefe") -> lastNfefe sendToRC s >> return False
+    ("xkcd") -> lastNxkcd sendToRC s >> return False
+    ("heise") -> lastNheise sendToRC s >> return False
+    ("golem") -> lastNgolem sendToRC s >> return False
+    ("hackernews") -> lastNhackernews sendToRC s >> return False
     otherwise -> putStrLn s >> return False
