@@ -57,7 +57,7 @@ sec2µs = floor . (* 1E6)
 grepData :: IO String
 grepData = do
   let list = []
-  threadDelay . sec2µs $ 10
+  threadDelay . sec2µs $ (60 * 6)
   (contents:_) <- grpNfeed 1 "https://news.ycombinator.com/rss" (id, id, const "")
   -- (contents:_) <- grpNfeed 1 "https://blog.fefe.de/rss.xml?html" (id, id, const "") 
   -- handle <- openFile "/tmp/test.txt" ReadMode
