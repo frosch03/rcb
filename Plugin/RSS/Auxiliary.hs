@@ -1,10 +1,9 @@
 module Plugin.RSS.Auxiliary where
 
-import Plugin.RSS.Reader (readFeed, title, link, description)
+import Plugin.RSS.Reader (readFeed, rss2string)
 
 import Text.ParserCombinators.Parsec
 import Text.Parsec.Perm
-import Text.Read (readMaybe)
 
 grepImgUrl :: String -> String
 grepImgUrl s = fst $
@@ -24,17 +23,8 @@ grepImgUrl s = fst $
         many anyChar
         return (src, title)
 
-grepNfeed :: Int -> String -> ((String -> String), (String -> String), (String -> String)) -> (String -> IO ()) -> String -> IO ()
-grepNfeed i feed (tFn, lFn, dFn) postFn s = do
-  let n = if (length . tail . words $ s) > 0
-          then maybe i id (readMaybe (head . tail . words $ s) :: Maybe Int)
-          else i
-  xs <- readFeed n feed
-  let ts = map title       xs
-      ls = map link        xs
-      ds = map description xs
-      ms = zipWith3 (\d t l -> "[" ++ (tFn t) ++ "](" ++ (lFn l) ++ "): " ++ (dFn d)) ds ts ls
-  mapM putStrLn ms
-  mapM postFn ms
-  return ()
-    
+grepFeeds :: String -> ((String -> String), (String -> String), (String -> String)) -> Int -> IO [String]
+grepFeeds feed fns i = do
+  xs <- readFeed i feed
+  let ms = map (rss2string fns) xs
+  return ms
