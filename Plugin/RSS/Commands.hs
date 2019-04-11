@@ -2,17 +2,42 @@ module Plugin.RSS.Commands where
 
 import Plugin.RSS.Auxiliary
 
-lastNxkcd :: (String -> IO ()) -> String -> IO ()
-lastNxkcd = grepNfeed 1 "https://www.xkcd.com/rss.xml" (id, id, grepImgUrl)
 
-lastNfefe :: (String -> IO ()) -> String -> IO ()
-lastNfefe = grepNfeed 1 "https://blog.fefe.de/rss.xml?html" (filter (not . flip elem ['`', '"']), id, const "")
+-- type RssConfig = [FeedDescriptor]
 
-lastNheise :: (String -> IO ()) -> String -> IO ()
-lastNheise = grepNfeed 1 "http://www.heise.de/newsticker/heise.rdf" (id, id, const "")
+data RssConfig
+    = RssConfig
+      { feeds :: [(String, FeedDescriptor)]
+      , pushs :: PushDescriptors
+      }
 
-lastNgolem :: (String -> IO ()) -> String -> IO ()
-lastNgolem = grepNfeed 1 "https://rss.golem.de/rss.php?feed=RSS2.0" (id, id, const "")
+data FeedDescriptor
+    = Feed
+      { feedUrl         :: String
+      , feedTransformer :: (String -> String, String -> String, String -> String)
+      }
 
-lastNhackernews :: (String -> IO ()) -> String -> IO ()
-lastNhackernews = grepNfeed 1 "https://news.ycombinator.com/rss" (id, id, const "")
+data PushDescriptors
+    = Push
+      { pushFeedIntoRoomss :: [(FeedDescriptor, [String])]
+      , pushInterval       :: Int
+      }
+
+rssConfig :: RssConfig
+rssConfig =
+    RssConfig
+    { feeds =
+          [ ("xkcd", Feed "https://www.xkcd.com/rss.xml" (id, id, grepImgUrl))
+          , ("fefe", Feed "https://blog.fefe.de/rss.xml?html" (filter (not . flip elem ['`', '"']), id, const ""))
+          , ("heise", Feed "http://www.heise.de/newsticker/heise.rdf" (id, id, const ""))
+          , ("golem", Feed "https://rss.golem.de/rss.php?feed=RSS2.0" (id, id, const ""))
+          , ("hackernews", Feed "https://news.ycombinator.com/rss" (id, id, const ""))
+          ]
+
+    , pushs =
+          Push
+            [ (Feed "https://news.ycombinator.com/rss" (id, id, const ""), ["5gBGjzg9oHMZb9DpRdNfBQiWGorDmHwWXR"])
+            , (Feed "https://blog.fefe.de/rss.xml?html" (filter (not . flip elem ['`', '"']), id, const ""), ["5gBGjzg9oHMZb9DpRdNfBQiWGorDmHwWXR"])
+            ]
+            (6 * 60)
+    }

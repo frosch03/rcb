@@ -19,8 +19,17 @@ data RssItem = RssItem
     , description :: String
     } deriving Show
 
+-- | Transform the RssItem into a string that follows the rocket chat
+-- format
+rss2string :: ((String -> String), (String -> String), (String -> String)) -> RssItem -> String
+rss2string (tFn, lFn, dFn) itm =
+    "[" ++ (tFn t) ++ "](" ++ (lFn l) ++ "): " ++ (dFn d)
+    where
+      t = title       itm
+      l = link        itm
+      d = description itm
+
 -- | Read one feed into a list of rssitems
--- readFeed :: Int -> URL -> IO [RssItem]
 readFeed :: Int -> String -> IO [RssItem]
 readFeed n url = do
     let urlBS = BSU.fromString url
