@@ -1,28 +1,26 @@
 module Main where
 
-import RCT as R1
-import StreamFunctions as S1
-import RCT2 as R2
-import StreamFunctions2 as S2
 import Configuration
 
-import Wuss
-import FRP.Yampa
-import Network.WebSockets (ClientApp)
+import RssCommands as RC
+import RssPush     as RP
 
--- NEW
 import Control.Concurrent (forkIO)
 import Control.Monad (forever, void)
--- --
+import Network.WebSockets (ClientApp)
+import Wuss (runSecureClient)
+
+import FRP.Yampa (reactimate)
+
 
 reactiveWS :: ClientApp ()
 reactiveWS c = do
   putStrLn "Starting Continuous News Deliverer"
   void . forkIO . forever $ do
-      reactimate (R2.initialize c) (R2.sense c) (R2.actuate c) S2.process
+      reactimate (RP.initialize c) (RP.sense c) (RP.actuate c) RP.process
 
-  putStrLn "Starting Yampa"
-  reactimate (R1.initialize c) (R1.sense c) (R1.actuate c) S1.process
+  putStrLn "Starting Rss Commands"
+  reactimate (RC.initialize c) (RC.sense c) (RC.actuate c) RC.process
 
 main :: IO ()
 main = runSecureClient rct_server rct_port rct_path reactiveWS
