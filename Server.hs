@@ -13,7 +13,7 @@ instance Show (Server) where
 
 instance Read (Server) where
     readsPrec p s = case parse pServerId "" s of
-                      (Left  _) -> error $ "error while parsing Server ID"
+                      (Left  s) -> error $ "error while parsing Server ID" ++ (show s)
                       (Right x) -> [(x, "")]
 
 pServerId :: GenParser Char st Server

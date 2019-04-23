@@ -324,7 +324,7 @@ pAuthType
 
 instance Read (AuthType) where
     readsPrec p s = case parse pAuthType "" s of
-                      Left _  -> error $ "error while parsing AuthType"
+                      Left s  -> error $ "error while parsing AuthType" ++ (show s)
                       Right x -> [(x, "")]
 
 
@@ -368,7 +368,7 @@ pCollection
 
 instance Read (Collection) where
     readsPrec p s = case parse pCollection "" s of
-                      Left _  -> error $ "error while parsing Collection"
+                      Left s  -> error $ "error while parsing Collection" ++ (show s)
                       Right x -> [(x, "")]
 
 
@@ -379,7 +379,7 @@ pNotificationType =
 
 instance Read (NotificationType) where
     readsPrec p s = case parse pNotificationType "" s of
-                      Left _  -> error $ "error while parsing NotificationType"
+                      Left s  -> error $ "error while parsing NotificationType" ++ (show s)
                       Right x -> [(x, "")]
 
 pConnected :: GenParser Char st Message

@@ -71,5 +71,5 @@ pUsernameFromFields = do
 
 -- instance Read (Bool) where
 --     readsPrec p s = case parse pBool "" s of
---                       Left _  -> error $ "error while parsing Bool"
+--                       Left s  -> error $ "error while parsing Bool" ++ (show s)
 --                       Right x -> [(x, "")]
