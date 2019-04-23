@@ -19,7 +19,7 @@ import FRP.Yampa (reactimate)
 reactiveWS :: ClientApp ()
 reactiveWS c = do
   config <- newMVar rssConfig
-  putStrLn "DISABLED: >>> Starting Continuous News Deliverer"
+  -- putStrLn "DISABLED: >>> Starting Continuous News Deliverer"
   putStrLn "Starting Continuous News Deliverer"
   void . forkIO . forever $ do
       reactimate (RP.initialize config c) (RP.sense config c) (RP.actuate c) RP.process
