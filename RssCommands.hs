@@ -168,6 +168,7 @@ helpMsg =
     , "del command <Number :: Int>                     - remove the rss command with the number\\n"
     , "del push <Number :: Int>                        - remove the push to room with the number\\n"
     , "config                                          - show the current configuration\\n"
+    , "update                                          - fill in the room id for new room entrys\\n"
     , "exit                                            - shutdown the bot\\n"
     , "help                                            - display this screen\\n"
     , "\\n"
