@@ -159,12 +159,20 @@ data ResultField
       , rf3_mentions  :: [String]
       , rf3_channels  :: [String]
       }
-    | ER
-      { erIsClientSafe :: Bool
-      , erError        :: Int
-      , erReason       :: String
-      , erMessage      :: String
-      , erErrorType    :: String
+    | ER1
+      { er1IsClientSafe :: Bool
+      , er1Error        :: Int
+      , er1Reason       :: String
+      , er1Message      :: String
+      , er1ErrorType    :: String
+      }
+    | ER2
+      { er2IsClientSafe :: Bool
+      , er2Error        :: String
+      , er2Reason       :: String
+      , er2Details      :: String
+      , er2Message      :: String
+      , er2ErrorType    :: String
       }
     deriving (Eq, Show)
 
@@ -569,6 +577,15 @@ pResultField3 = do
   return $ RF3 id1 rid msg date1 u date2 urls [] []
 
 
+-- "{\"msg\":\"result\",\"id\":\"81216\",\"error\":{\"isClientSafe\":true,\"error\":\"error-invalid-room\",\"reason\":\"Invalid room\",\"details\":{\"method\":\"canAccessRoom\"},\"message\":\"Invalid room [error-invalid-room]\",\"errorType\":\"Meteor.Error\"}}"
+-- error :: (ER2)
+--   isClientSafe :: Bool
+--   error        :: String
+--   reason       :: String
+--   details      :: Method :: String
+--   message      :: String
+--   errorType    :: String
+
 -- "{\"msg\":\"result\",\"id\":\"42\",\"error\":{\"isClientSafe\":true,\"error\":500,\"reason\":\"Internal server error\",\"message\":\"Internal server error [500]\",\"errorType\":\"Meteor.Error\"}}"
 -- error :: (ER)
 --   isClientSafe :: Bool
@@ -579,6 +596,11 @@ pResultField3 = do
 
 pResultFieldError :: GenParser Char st ResultField
 pResultFieldError = do
+      try pResultFieldError1
+  <|> try pResultFieldError2
+
+pResultFieldError1 :: GenParser Char st ResultField
+pResultFieldError1 = do
   string "\"error\":{"
   (safe, erno, reason, msg, typ) <- permute
     (    (\a _ b _ c _ d _ e -> (a,b,c,d,e))
@@ -593,9 +615,35 @@ pResultFieldError = do
     <||> (try $ pValOfKey "errorType")
     )
   char '}'
-  return $ ER safe erno reason msg typ
+  return $ ER1 safe erno reason msg typ
 --         ER Bool Int String String String
 
+pMethodDetailsOfKey :: String -> GenParser Char st String
+pMethodDetailsOfKey key = do
+  string $ "\"" ++ key ++ "\":{"
+  mtd <- pValOfKey "method"
+  char '}'
+  return $ mtd
+
+pResultFieldError2 :: GenParser Char st ResultField
+pResultFieldError2 = do
+  string "\"error\":{"
+  (safe, err, reason, dets, msg, typ) <- permute
+    (    (\a _ b _ c _ d _ e _ f -> (a,b,c,d,e,f))
+    <$$> (try $ pBoolOfKey "isClientSafe")
+    <||> (char ',')
+    <||> (try $ pValOfKey "error")
+    <||> (char ',')
+    <||> (try $ pValOfKey "reason")
+    <||> (char ',')
+    <||> (try $ pMethodDetailsOfKey "details")
+    <||> (char ',')
+    <||> (try $ pValOfKey "message")
+    <||> (char ',')
+    <||> (try $ pValOfKey "errorType")
+    )
+  char '}'
+  return $ ER2 safe err reason dets msg typ
 
 
 pResultField :: GenParser Char st ResultField
