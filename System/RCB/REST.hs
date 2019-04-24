@@ -1,10 +1,11 @@
-{-# LANGUAGE OverloadedStrings #-}
+module System.RCB.REST
+where
 
-module RCTRest where
- 
-import Plugin.RSS.Commands
-import AuxParser
-
+import System.RCB.Plugins.RSS.RssConfig.Datatype
+import System.RCB.Plugins.RSS.RssConfig.Modifiers
+import System.RCB.Plugins.RSS.RssConfig.PushDescriptors
+import Data.RocketChat.AuxiliaryParsers
+    
 import Network.HTTP.Conduit
 import Control.Monad.IO.Class
 import Data.ByteString.Char8
@@ -26,6 +27,8 @@ userId, authTk :: String
 -- userId = "Uncomment and add sensible contetnt"
 -- authTk = "Uncomment and add sensible contetnt"
 
+userId = "dNfBQiWGorDmHwWXR"
+authTk = "mRwPwVYV1e6TNLT-ym4w6NJQs70u_ZpmkGWXHw4YRHL"
 
 data Presence = Offline | Online
               deriving (Show, Read)

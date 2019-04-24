@@ -1,4 +1,4 @@
-> module Configuration where
+> module System.RCB.Configuration where
 > import Network.Socket (PortNumber)
 > import Message
 > import Method

@@ -1,4 +1,4 @@
-module Plugin.RSS.Reader
+module System.RCB.Plugins.RSS.Reader
 where
 
 import Data.List                (isPrefixOf)
@@ -170,5 +170,3 @@ replace from to s@(x:xs) =
     if from `isPrefixOf` s
         then to ++ replace from to (drop (length from) s)
         else x : replace from to xs
-
--- }}}

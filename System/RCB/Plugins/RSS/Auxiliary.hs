@@ -1,64 +1,52 @@
-module RssCommands
-    ( initialize
-    , sense
-    , process
-    , actuate
-    )
-where
+module System.RCB.Plugins.RSS.Auxiliary where
 
-import RCTRest (fillRoomIDs)
+import Data.RocketChat.Message
+import Data.RocketChat.Message.Datatype
+import Data.RocketChat.Message.ChangedField
+import Data.RocketChat.Message.ChangedField.ChangedFieldArgs
+import System.RCB.Auxiliary
+import System.RCB.Plugins.RSS.Reader (readFeed, rss2string)
+import System.RCB.Plugins.RSS.RssConfig.Datatype
+import System.RCB.Plugins.RSS.RssConfig.FeedDescriptor
+import System.RCB.Plugins.RSS.RssConfig.PushDescriptors
+import System.RCB.Plugins.RSS.RssConfig.Modifiers
+import System.RCB.Plugins.RSS.IRocketify
+import System.RCB.REST
+import System.RCB.IAscii
 
-import Aux (secondsOfTheDay, countFromMsg)
-import Ascii (ascii)
-import Message (Message(..), ChangedField(..), ChangedFieldArgs(..), mkSendMsg)
-import Method (RoomId)
-import Configuration (init_string, login_string, subscribe)
-
-import Plugin.RSS.Commands (RssConfig, FeedDescriptor(..), feeds, rctify, addRssCommand, addPushToRoom, delRssCommand, delPushToRoom, Room(..), RoomType(..)) 
-import Plugin.RSS.Auxiliary 
-
-import FRP.Yampa (DTime, SF, arr)
-import Data.Text (Text, pack, unpack)
-import Text.Read (readMaybe)
-import Network.WebSockets (ClientApp, receiveData, sendClose, sendTextData)
-import Network.WebSockets.Connection (Connection(..)) 
 import Control.Concurrent (forkIO)
+import Control.Concurrent       (threadDelay)
+import Text.Read (readMaybe)
+import Network.WebSockets.Connection (Connection(..))
+import Network.WebSockets (ClientApp, receiveData, sendClose, sendTextData)
 import Control.Concurrent.MVar
+import Text.ParserCombinators.Parsec
+import Text.Parsec.Perm
+import Data.Text (Text, pack, unpack)
+    
+grepImgUrl :: String -> String
+grepImgUrl s = fst $
+    case (parse pImageTag' "" s) of
+      Left err  -> error $ show err
+      Right xs  -> xs
+    where 
+      pImageTag' :: GenParser Char st (String, String)
+      pImageTag' = do
+        many $ noneOf "<"
+        string "<img src=\""
+        src <- manyTill anyChar (try $ string "\" title")
+        string "=\""
+        title <- manyTill anyChar (try $ string "\" alt")
+        string "=\""
+        alt <- manyTill anyChar (try $ string "\" />")
+        many anyChar
+        return (src, title)
 
-
-process :: SF Message (Maybe (String, String))
-process =
-    arr $ getText
-
-initialize :: Connection -> IO Message
-initialize c = do
-    mapM (sendAndShow c)
-      [ init_string
-      , login_string
-      , subscribe
-      ]
-    msg <- receiveData c
-    return $ read . unpack $ msg
-
-sense :: Connection -> Bool -> IO (DTime, Maybe Message)
-sense c _ = do
-    raw <- receiveData c
-    -- putStrLn $ "> " ++ (unpack $ raw)
-    let msg = read . unpack $ raw :: Message
-    if (msg == Ping) 
-       then (send c $ Pong) >> return (0.0, Nothing)
-       else return (0.0, Just msg)
-
-
-actuate :: MVar RssConfig -> Connection -> Bool -> Maybe (Method.RoomId, String) -> IO Bool
-actuate _ c _ Nothing = return False
-actuate config c _ (Just (rid, msg)) = do
-    mid <- secondsOfTheDay
-    let sendMsg :: String -> IO ()
-        sendMsg = send c . mkSendMsg mid rid
-    res <- cli sendMsg config msg
-    return res
-               
+grepFeeds :: String -> ((String -> String), (String -> String), (String -> String)) -> Int -> IO [String]
+grepFeeds feed fns i = do
+  xs <- readFeed i feed
+  let ms = map (rss2string fns) xs
+  return ms
 
 sendAndShow :: Connection -> Message -> IO ()
 sendAndShow c s = do
@@ -174,3 +162,13 @@ helpMsg =
     , "\\n"
     , "```"
     ]
+         
+
+grepData :: RssConfig -> Int -> IO [(String, [String])]
+grepData cfg delay = do
+    threadDelay . sec2µs $ delay
+    let (io_feeds, rooms) =
+            unzip [ (return . head =<< grepFeeds feed fns 1, map room_id rooms)
+                        | (Feed feed fns, rooms) <- pushFeedIntoRoomss . pushs $ cfg ]
+    feeds <- sequence io_feeds
+    return $ zip feeds rooms

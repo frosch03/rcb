@@ -1,7 +1,9 @@
-module AuxParser
+module Data.RocketChat.AuxiliaryParsers
 where
 
 import Text.ParserCombinators.Parsec
+import Text.Parsec.Perm
+
   
 pBool :: GenParser Char st Bool
 pBool
@@ -45,7 +47,6 @@ pValOfKey key = do
   s <- pQuotedString
   return (s)
 
-
 pParams :: (GenParser Char st a) -> GenParser Char st [a]
 pParams parser = do
   string "\"params\":["
@@ -68,8 +69,72 @@ pUsernameFromFields = do
   char '}'
   return user
 
+pUrl :: GenParser Char st String
+pUrl = do
+  char '{'
+  url <- pValOfKey "url"
+  char '}'
+  return url
 
--- instance Read (Bool) where
---     readsPrec p s = case parse pBool "" s of
---                       Left s  -> error $ "error while parsing Bool" ++ (show s)
---                       Right x -> [(x, "")]
+pUrls :: GenParser Char st [String]
+pUrls = do
+  string "\"urls\":["
+  urls <- sepBy pUrl (char ',')
+  char ']'
+  return urls
+
+pMethodDetailsOfKey :: String -> GenParser Char st String
+pMethodDetailsOfKey key = do
+  string $ "\"" ++ key ++ "\":{"
+  mtd <- pValOfKey "method"
+  char '}'
+  return $ mtd
+
+pUser :: GenParser Char st (String, String, String)
+pUser = do 
+  char '{'
+  result <- permute
+         (    (\a _ b _ c -> (a,b,c))
+         <$$> (try $ pValOfKey "_id")
+         <||> (char ',')
+         <||> (try $ pValOfKey "username")
+         <||> (char ',')
+         <||> (try $ pValOfKey "name")
+         )
+  char '}'
+  return result
+
+pSender :: GenParser Char st (String, String, String)
+pSender = do
+  string "\"sender\":"
+  result <- pUser
+  return result
+
+pInnerMessage :: GenParser Char st String
+pInnerMessage = do
+  string "\"message\":{"
+  msg <- pValOfKey "msg"
+  char '}'
+  return msg
+       
+
+pSendMsgParam :: GenParser Char st (String, String, String)
+pSendMsgParam = do
+  char '{'
+  result <- permute
+    (    (\a _ b _ c -> (a,b,c))
+    <$$> (try $ pValOfKey "_id")
+    <||> (char ',')
+    <||> (try $ pValOfKey "rid")
+    <||> (char ',')
+    <||> (try $ pValOfKey "msg")
+    )
+  char '}'
+  return result 
+
+pUsername :: GenParser Char st String
+pUsername = do 
+  string "\"user\":{"
+  usr <- pValOfKey "username"
+  char '}'
+  return usr
