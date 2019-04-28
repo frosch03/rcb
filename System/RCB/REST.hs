@@ -8,7 +8,7 @@ import Data.RocketChat.AuxiliaryParsers
     
 import Network.HTTP.Conduit
 import Control.Monad.IO.Class
-import Data.ByteString.Char8
+import qualified Data.ByteString.Char8 as BSC8
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.ByteString.Lazy.Char8 as LBSC8
 import Data.CaseInsensitive
@@ -130,12 +130,12 @@ pUsersInfoError = do
 x :: String -> Request
 x s =
     defaultRequest
-    { method = pack "GET"
-    , host = pack $ domain
-    , path = pack $ "/api/v1/" ++ s
+    { method = BSC8.pack "GET"
+    , host = BSC8.pack $ domain
+    , path = BSC8.pack $ "/api/v1/" ++ s
     , requestHeaders =
-        [ (mk $ pack "X-User-Id",    pack userId)
-        , (mk $ pack "X-Auth-Token", pack authTk)
+        [ (mk $ BSC8.pack "X-User-Id",    BSC8.pack userId)
+        , (mk $ BSC8.pack "X-Auth-Token", BSC8.pack authTk)
         ]
     }
 
