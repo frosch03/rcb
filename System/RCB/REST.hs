@@ -13,6 +13,7 @@ import qualified Data.ByteString.Lazy as LBS
 import qualified Data.ByteString.Lazy.Char8 as LBSC8
 import Data.CaseInsensitive
 import Data.Aeson
+import Data.Maybe (listToMaybe)
 -- import Control.Applicative
 import Control.Concurrent.MVar
 
@@ -144,10 +145,15 @@ test s = newManager tlsManagerSettings >>= \m -> httpLbs (x s) m
 
 fillRoomIDs :: MVar RssConfig -> IO ()
 fillRoomIDs config = do
+  resp <- test $ "im.list"
+  let resp' = (read . LBSC8.unpack . responseBody $ resp) :: RestResponse
+      ims   = restResponse_ims resp' 
+      -- r'    = (read . LBSC8.unpack . responseBody $ resp) :: UsersInfoUser
   cfg <- takeMVar config
-  let rs = Prelude.map room_name $ allRoomsUniq cfg
-  rids <- mapM (directMessageRoomId "lambdabot") rs
-  let rtois = Prelude.zip rs rids
+  let usrs = Prelude.map room_name $ allRoomsUniq cfg
+  -- rids' <- mapM (directMessageRoomId "lambdabot") usrs
+  rids <- mapM (directMessageRoomId' ims "lambdabot") usrs
+  let rtois = Prelude.zip usrs rids
       newcfg = updateRooms cfg rtois
   putMVar config newcfg
 
@@ -156,6 +162,16 @@ directMessageRoomId fromUser toUser = do
   fromUser_ <- getUser fromUser
   toUser_   <- getUser toUser
   return . Prelude.foldl1 (++) . Prelude.map usersinfo_id $ [toUser_, fromUser_]
+  
+directMessageRoomId' :: [ImList] -> String -> String -> IO String
+directMessageRoomId' ims fromUser toUser = do
+  return . maybe "" id $ mayid
+    where 
+      mayid = listToMaybe $ [ imList_id k
+                            | k <- ims
+                            , (  fromUser `elem` (imList_usernames k)
+                               && toUser   `elem` (imList_usernames k))
+                            ]
   
 
 getUser :: String -> IO UsersInfoUser

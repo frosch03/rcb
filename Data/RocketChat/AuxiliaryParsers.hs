@@ -47,6 +47,12 @@ pValOfKey key = do
   s <- pQuotedString
   return (s)
 
+pPOfKey :: (GenParser Char st a) -> String -> GenParser Char st a
+pPOfKey pP key = do
+  string $ "\"" ++ key ++ "\":"
+  s <- pP
+  return $ s
+
 pParams :: (GenParser Char st a) -> GenParser Char st [a]
 pParams parser = do
   string "\"params\":["
