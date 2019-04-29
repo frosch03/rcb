@@ -24,9 +24,10 @@ Here the initial definition of the feeds and feed commands:
 > 
 >     , pushs =
 >           Push
->             [ (Feed "https://news.ycombinator.com/rss" (id, id, const ""), [Room "frosch03" "5gBGjzg9oHMZb9DpRdNfBQiWGorDmHwWXR" Direct])
->             , (Feed "https://www.xkcd.com/rss.xml" (id, id, grepImgUrl), [Room "frosch03" "5gBGjzg9oHMZb9DpRdNfBQiWGorDmHwWXR" Direct])
->             , (Feed "https://blog.fefe.de/rss.xml?html" (filter (not . flip elem ['`', '"']), id, const ""), [Room "frosch03" "5gBGjzg9oHMZb9DpRdNfBQiWGorDmHwWXR" Direct])
+>             [ (Feed "https://news.ycombinator.com/rss" (id, id, const ""), [Room "frosch03" "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" Direct])
+>             , (Feed "https://news.ycombinator.com/rss" (id, id, const ""), [Room "admin" "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" Direct])
+>             , (Feed "https://www.xkcd.com/rss.xml" (id, id, grepImgUrl), [Room "frosch03" "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" Direct])
+>             , (Feed "https://blog.fefe.de/rss.xml?html" (filter (not . flip elem ['`', '"']), id, const ""), [Room "frosch03" "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" Direct])
 >             ]
 >             (6 * 60)
 >     }
