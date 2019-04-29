@@ -17,7 +17,7 @@ mkSendMethod :: Int -> RoomId -> String -> Method
 mkSendMethod id rid text =
     SendMsg id [(mid, rid, text)]
     where
-      mid = sha256hash $ text ++ show id
+      mid = sha256hash $ rid ++ text ++ show id
 
 -- Datatype
 data Method
