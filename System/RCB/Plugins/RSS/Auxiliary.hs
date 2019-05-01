@@ -1,3 +1,14 @@
+-------------------------------------------------------------------------------
+-- | Module      :  System.RCB.Plugins.RSS.Auxiliary
+--   Copyright   :  (c) Matthias Brettschneider 2019
+--   License     :  as-is
+--
+--   Maintainer  :  frosch03@gmail.com
+--   Stability   :  unstable
+--   Portability :  unportable
+--
+-------------------------------------------------------------------------------
+
 module System.RCB.Plugins.RSS.Auxiliary where
 
 import Data.RocketChat.Message
