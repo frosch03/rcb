@@ -53,10 +53,10 @@ grepImgUrl s = fst $
         many anyChar
         return (src, title)
 
-grepFeeds :: String -> ((String -> String), (String -> String), (String -> String)) -> Int -> IO [String]
-grepFeeds feed fns i = do
+grepFeeds :: String -> FeedTransformer -> Int -> IO [String]
+grepFeeds feed ftr i = do
   xs <- readFeed i feed
-  let ms = map (rss2string fns) xs
+  let ms = map (rss2string ftr) xs
   return ms
 
 sendAndShow :: Connection -> Message -> IO ()
