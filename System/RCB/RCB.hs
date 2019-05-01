@@ -1,3 +1,24 @@
+-------------------------------------------------------------------------------
+-- | Module      :  System.RCB.RCB
+--   Copyright   :  (c) Matthias Brettschneider 2019
+--   License     :  as-is
+--
+--   Maintainer  :  frosch03@gmail.com
+--   Stability   :  unstable
+--   Portability :  unportable
+--
+--   Connect to a rocket chat server via
+--   <https://hackage.haskell.org/package/wuss web-sockets> and
+--   read/write from configured channels.
+-- 
+--   Configuration files are within:
+-- 
+--   - the RSS plugins config within
+--     @System/RCB/Plugins/RSS/Configuration.lhs@ 
+--   - a global one within @System/RCB/Configuration@
+--
+-------------------------------------------------------------------------------
+
 module System.RCB.RCB
 where
 
