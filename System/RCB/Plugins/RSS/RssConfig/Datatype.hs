@@ -20,5 +20,5 @@ data RssConfig
       { feeds :: [(String, FeedDescriptor)]
       , pushs :: PushDescriptors
       }
-    deriving (Show, Read)
+    deriving (Show, Read, Eq)
 

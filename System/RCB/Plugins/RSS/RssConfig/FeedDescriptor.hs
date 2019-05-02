@@ -20,7 +20,7 @@ data FeedDescriptor
       { feedUrl         :: String
       , feedTransformer :: FeedTransformer
       }
-    deriving (Show, Read)
+    deriving (Show, Read, Eq)
 
 
 -- Defaults

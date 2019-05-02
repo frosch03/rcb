@@ -15,16 +15,16 @@ where
 data TTitle
     = Tempty
     | Tdrop_quotes
-    deriving (Show, Read)
+    deriving (Show, Read, Eq)
 
 data TLink
     = Lempty
-    deriving (Show, Read)
+    deriving (Show, Read, Eq)
 
 data TDescription
     = Dempty
     | Dimgurl
-    deriving (Show, Read)
+    deriving (Show, Read, Eq)
 
 data FeedTransformer
     = FeedTransformer
@@ -32,4 +32,4 @@ data FeedTransformer
       , feedTransformer_link :: Maybe TLink
       , feedTransformer_description :: Maybe TDescription
       }
-    deriving (Show, Read)
+    deriving (Show, Read, Eq)
