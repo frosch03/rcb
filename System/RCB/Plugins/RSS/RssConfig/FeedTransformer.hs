@@ -9,20 +9,13 @@
 --
 -------------------------------------------------------------------------------
 
-module System.RCB.Plugins.RSS.RssConfig.FeedDescriptor
-where    
+module System.RCB.Plugins.RSS.RssConfig.FeedTransformer
+    ( FeedTransformer(..)
+    , TTitle(..)
+    , TLink(..)
+    , TDescription(..)
+    )
+where
 
-import System.RCB.Plugins.RSS.RssConfig.FeedTransformer
-
--- Datatype
-data FeedDescriptor
-    = Feed
-      { feedUrl         :: String
-      , feedTransformer :: FeedTransformer
-      }
-    deriving (Show, Read, Eq)
-
-
--- Defaults
-defaultFeed :: FeedDescriptor
-defaultFeed = Feed "" (FeedTransformer Nothing Nothing (Just Dempty))
+import System.RCB.Plugins.RSS.RssConfig.FeedTransformer.Datatype
+import System.RCB.Plugins.RSS.RssConfig.FeedTransformer.Instances

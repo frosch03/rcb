@@ -11,6 +11,7 @@
 
 module System.RCB.Plugins.RSS.Auxiliary where
 
+import System.RCB.Configuration (rct_config_file)
 import Data.RocketChat.Message
 import Data.RocketChat.Message.Datatype
 import Data.RocketChat.Message.ChangedField
@@ -18,6 +19,7 @@ import Data.RocketChat.Message.ChangedField.ChangedFieldArgs
 import System.RCB.Auxiliary
 import System.RCB.Plugins.RSS.Reader (readFeed, rss2string)
 import System.RCB.Plugins.RSS.RssConfig.Datatype
+import System.RCB.Plugins.RSS.RssConfig.FeedTransformer
 import System.RCB.Plugins.RSS.RssConfig.FeedDescriptor
 import System.RCB.Plugins.RSS.RssConfig.PushDescriptors
 import System.RCB.Plugins.RSS.RssConfig.Modifiers
@@ -35,28 +37,10 @@ import Text.ParserCombinators.Parsec
 import Text.Parsec.Perm
 import Data.Text (Text, pack, unpack)
     
-grepImgUrl :: String -> String
-grepImgUrl s = fst $
-    case (parse pImageTag' "" s) of
-      Left err  -> error $ show err
-      Right xs  -> xs
-    where 
-      pImageTag' :: GenParser Char st (String, String)
-      pImageTag' = do
-        many $ noneOf "<"
-        string "<img src=\""
-        src <- manyTill anyChar (try $ string "\" title")
-        string "=\""
-        title <- manyTill anyChar (try $ string "\" alt")
-        string "=\""
-        alt <- manyTill anyChar (try $ string "\" />")
-        many anyChar
-        return (src, title)
-
-grepFeeds :: String -> ((String -> String), (String -> String), (String -> String)) -> Int -> IO [String]
-grepFeeds feed fns i = do
+grepFeeds :: String -> FeedTransformer -> Int -> IO [String]
+grepFeeds feed ftr i = do
   xs <- readFeed i feed
-  let ms = map (rss2string fns) xs
+  let ms = map (rss2string ftr) xs
   return ms
 
 sendAndShow :: Connection -> Message -> IO ()
@@ -83,25 +67,33 @@ cli notify config s = do
  
       "add" -> do
         addCli config . unwords . tail . words $ s
+        updateCli notify config
         return False
 
       "del" -> do
         delCli config . unwords . tail . words $ s
+        readMVar config >>= notify . rctify
         return False
 
       "config" -> do
-        cfg <- readMVar config
-        notify . rctify $ cfg
+        readMVar config >>= notify . rctify
         return False 
 
       "update" -> do
-        forkIO . fillRoomIDs $ config
-        cfg <- readMVar config
-        notify . rctify $ cfg
+        updateCli notify config
         return False
 
       "help" -> do
         notify . foldl (++) "" $ helpMsg
+        return False
+
+      "store" -> do
+        mvconf <- readMVar config
+        store mvconf
+        return False
+
+      "restore" -> do
+        restore config
         return False
 
       otherwise -> do
@@ -121,15 +113,16 @@ addCli config s = do
               | otherwise    = Nothing
           newconf = maybe mvconf (addRssCommand mvconf) (fn . unwords . tail . words $ s)
       putMVar config newconf
+      store newconf
 
     "push" -> do
-      return ()
       mvconf <- takeMVar config
       let fn s
               | (length . words $ s) > 1 = Just ((Room ((words s)!!0) "" Direct), (words s)!!1)
               | otherwise    = Nothing
           newconf = maybe mvconf (addPushToRoom mvconf) (fn . unwords . tail . words $ s)
       putMVar config newconf
+      store newconf
 
     otherwise -> return ()
 
@@ -143,6 +136,7 @@ delCli config s = do
               | otherwise    = Nothing
           newconf = maybe mvconf (delRssCommand mvconf) (fn . unwords . tail . words $ s)
       putMVar config newconf
+      store newconf
 
     "push" -> do
       return ()
@@ -152,8 +146,29 @@ delCli config s = do
               | otherwise    = Nothing
           newconf = maybe mvconf (delPushToRoom mvconf) (fn . unwords . tail . words $ s)
       putMVar config newconf
+      store newconf
 
     otherwise -> return ()
+
+updateCli :: (String -> IO ()) -> MVar RssConfig -> IO ()
+updateCli notify config = do
+  forkIO $ do
+    fillRoomIDs config
+    mvconf <- readMVar config
+    store mvconf
+    notify . rctify $ mvconf
+  return ()
+
+
+store :: RssConfig -> IO ()
+store cfg = do
+  writeFile rct_config_file . show $ cfg
+
+restore :: MVar RssConfig -> IO ()
+restore config = do
+  mvconf <- takeMVar config
+  readFile rct_config_file >>= putMVar config . read
+
 
 helpMsg :: [String]
 helpMsg =

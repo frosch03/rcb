@@ -15,6 +15,7 @@ where
 import System.RCB.Plugins.RSS.RssConfig.Datatype
 import System.RCB.Plugins.RSS.RssConfig.PushDescriptors
 import System.RCB.Plugins.RSS.RssConfig.FeedDescriptor
+import System.RCB.Plugins.RSS.RssConfig.FeedTransformer
 
 import Data.List (groupBy, group, sort)
 import Data.Maybe (listToMaybe, maybe)
@@ -61,7 +62,7 @@ delPushToRoom config i =
       pushs_cntexp = (concat [ map ((,) (url, fns)) rooms | (Feed url fns, rooms) <- pushList ])
       pushs_cegrp  = groupBy (\((x, _), _) ((y, _), _) -> x == y) pushs_cntexp
       pushs_cegrp' = (take (i - 1) pushs_cegrp ++ drop i pushs_cegrp)
-      pushs' =  map (foldl (\(_, brooms) (a, aroom) -> (uncurry Feed a, (aroom:brooms))) (Feed "" (id, id, id), []))
+      pushs' =  map (foldl (\(_, brooms) (a, aroom) -> (uncurry Feed a, (aroom:brooms))) (Feed "" (FeedTransformer Nothing Nothing Nothing), []))
                     pushs_cegrp'
 
 updateRooms :: RssConfig -> [(String, String)] -> RssConfig
@@ -78,7 +79,7 @@ updateRooms config rtoid =
           = cur:news
       pushs_ceupd = foldr fn [] pushs_cntexp
       pushs_cegrp  = groupBy (\((x, _), _) ((y, _), _) -> x == y) pushs_ceupd
-      pushs' =  map (foldl (\(_, brooms) (a, aroom) -> (uncurry Feed a, (aroom:brooms))) (Feed "" (id, id, id), []))
+      pushs' =  map (foldl (\(_, brooms) (a, aroom) -> (uncurry Feed a, (aroom:brooms))) (Feed "" (FeedTransformer Nothing Nothing Nothing), []))
                     pushs_cegrp
 
 

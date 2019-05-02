@@ -32,8 +32,8 @@ process :: SF Message (Maybe (String, String))
 process =
     arr $ getText
 
-initialize :: Connection -> IO Message
-initialize c = do
+initialize :: MVar RssConfig -> Connection -> IO Message
+initialize config c = do
     mapM (sendAndShow c)
       [ init_string
       , login_string

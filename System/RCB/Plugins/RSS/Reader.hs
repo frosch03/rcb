@@ -12,6 +12,10 @@
 module System.RCB.Plugins.RSS.Reader
 where
 
+import System.RCB.Plugins.RSS.RssConfig.FeedDescriptor
+import System.RCB.Plugins.RSS.RssConfig.FeedTransformer
+import System.RCB.Plugins.RSS.ITransformable
+
 import Data.List                (isPrefixOf)
 import Data.Maybe               (catMaybes, maybeToList)
 import Network.HTTP             (getResponseBody, simpleHTTP, getRequest)
@@ -32,9 +36,9 @@ data RssItem = RssItem
 
 -- | Transform the RssItem into a string that follows the rocket chat
 -- format
-rss2string :: ((String -> String), (String -> String), (String -> String)) -> RssItem -> String
-rss2string (tFn, lFn, dFn) itm =
-    "[" ++ (tFn t) ++ "](" ++ (lFn l) ++ "): " ++ (dFn d)
+rss2string :: FeedTransformer -> RssItem -> String
+rss2string ftr itm =
+    "[" ++ (tfunc ftr t) ++ "](" ++ (tfunc ftr l) ++ "): " ++ (dfunc ftr d)
     where
       t = title       itm
       l = link        itm

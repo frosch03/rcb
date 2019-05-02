@@ -10,6 +10,8 @@
 -------------------------------------------------------------------------------
 
 module System.RCB.Plugins.RSS.RssConfig.Datatype
+    ( RssConfig(..)
+    )
 where
 
 import System.RCB.Plugins.RSS.RssConfig.PushDescriptors
@@ -20,5 +22,5 @@ data RssConfig
       { feeds :: [(String, FeedDescriptor)]
       , pushs :: PushDescriptors
       }
-    deriving (Show)
+    deriving (Show, Read, Eq)
 

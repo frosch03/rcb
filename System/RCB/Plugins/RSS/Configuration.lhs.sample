@@ -3,6 +3,7 @@
 > import System.RCB.Plugins.RSS.RssConfig.Datatype
 > import System.RCB.Plugins.RSS.RssConfig.FeedDescriptor
 > import System.RCB.Plugins.RSS.RssConfig.PushDescriptors
+> import System.RCB.Plugins.RSS.RssConfig.FeedTransformer
 > import Data.RocketChat.Message.Datatype
 
 > import System.RCB.Plugins.RSS.Auxiliary
@@ -15,19 +16,18 @@ Here the initial definition of the feeds and feed commands:
 > rssConfig =
 >     RssConfig
 >     { feeds =
->           [ ("xkcd", Feed "https://www.xkcd.com/rss.xml" (id, id, grepImgUrl))
->           , ("fefe", Feed "https://blog.fefe.de/rss.xml?html" (filter (not . flip elem ['`', '"']), id, const ""))
->           , ("heise", Feed "http://www.heise.de/newsticker/heise.rdf" (id, id, const ""))
->           , ("golem", Feed "https://rss.golem.de/rss.php?feed=RSS2.0" (id, id, const ""))
->           , ("hackernews", Feed "https://news.ycombinator.com/rss" (id, id, const ""))
+>           [ ("xkcd", Feed "https://www.xkcd.com/rss.xml" (FeedTransformer Nothing Nothing (Just Dimgurl)))
+>           , ("fefe", Feed "https://blog.fefe.de/rss.xml?html" (FeedTransformer (Just Tdrop_quotes) Nothing (Just Dempty)))
+>           , ("heise", Feed "http://www.heise.de/newsticker/heise.rdf" (FeedTransformer Nothing Nothing (Just Dempty)))
+>           , ("golem", Feed "https://rss.golem.de/rss.php?feed=RSS2.0" (FeedTransformer Nothing Nothing (Just Dempty)))
+>           , ("hackernews", Feed "https://news.ycombinator.com/rss" (FeedTransformer Nothing Nothing (Just Dempty)))
 >           ]
 > 
 >     , pushs =
 >           Push
->             [ (Feed "https://news.ycombinator.com/rss" (id, id, const ""), [Room "frosch03" "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" Direct])
->             , (Feed "https://news.ycombinator.com/rss" (id, id, const ""), [Room "admin" "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" Direct])
->             , (Feed "https://www.xkcd.com/rss.xml" (id, id, grepImgUrl), [Room "frosch03" "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" Direct])
->             , (Feed "https://blog.fefe.de/rss.xml?html" (filter (not . flip elem ['`', '"']), id, const ""), [Room "frosch03" "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" Direct])
+>             [ (Feed "https://news.ycombinator.com/rss" (FeedTransformer Nothing Nothing (Just Dempty)), [Room "user" "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" Direct])
+>             , (Feed "https://www.xkcd.com/rss.xml" (FeedTransformer Nothing Nothing (Just Dimgurl)), [Room "user" "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" Direct])
+>             , (Feed "https://blog.fefe.de/rss.xml?html" (FeedTransformer (Just Tdrop_quotes) Nothing (Just Dempty)), [Room "user" "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" Direct])
 >             ]
 >             (6 * 60)
 >     }
