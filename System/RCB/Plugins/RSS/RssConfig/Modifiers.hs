@@ -15,6 +15,7 @@ where
 import System.RCB.Plugins.RSS.RssConfig.Datatype
 import System.RCB.Plugins.RSS.RssConfig.PushDescriptors
 import System.RCB.Plugins.RSS.RssConfig.FeedDescriptor
+import System.RCB.Plugins.RSS.RssConfig.FeedTransformer
 
 import Data.List (groupBy, group, sort)
 import Data.Maybe (listToMaybe, maybe)

@@ -13,6 +13,8 @@ module System.RCB.Plugins.RSS.Reader
 where
 
 import System.RCB.Plugins.RSS.RssConfig.FeedDescriptor
+import System.RCB.Plugins.RSS.RssConfig.FeedTransformer
+import System.RCB.Plugins.RSS.ITransformable
 
 import Data.List                (isPrefixOf)
 import Data.Maybe               (catMaybes, maybeToList)

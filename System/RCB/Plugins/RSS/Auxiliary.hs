@@ -18,6 +18,7 @@ import Data.RocketChat.Message.ChangedField.ChangedFieldArgs
 import System.RCB.Auxiliary
 import System.RCB.Plugins.RSS.Reader (readFeed, rss2string)
 import System.RCB.Plugins.RSS.RssConfig.Datatype
+import System.RCB.Plugins.RSS.RssConfig.FeedTransformer
 import System.RCB.Plugins.RSS.RssConfig.FeedDescriptor
 import System.RCB.Plugins.RSS.RssConfig.PushDescriptors
 import System.RCB.Plugins.RSS.RssConfig.Modifiers
