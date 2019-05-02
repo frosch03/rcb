@@ -111,10 +111,8 @@ cli notify config s = do
         return False
 
       "restore" -> do
-        cfg_ <- (readFile "/tmp/rssConfig.data")
-        let cfg = (read cfg_ :: RssConfig)
         mvconf <- takeMVar config
-        putMVar config cfg
+        readFile "/tmp/rssConfig.data" >>= putMVar config . read
         return False
 
       otherwise -> do
