@@ -20,7 +20,7 @@ data PushDescriptors
       { pushFeedIntoRoomss :: [(FeedDescriptor, [Room])]
       , pushInterval       :: Int
       }
-    deriving (Show)
+    deriving (Show, Read)
 
 -- Sub-Datatype
 data Room
@@ -29,7 +29,7 @@ data Room
       , room_id   :: String
       , room_type :: RoomType
       }
-    deriving (Show, Eq, Ord)
+    deriving (Show, Read, Eq, Ord)
 
 -- SubSub-Datatype
 data RoomType = Direct | Group deriving (Show, Read, Eq, Ord)

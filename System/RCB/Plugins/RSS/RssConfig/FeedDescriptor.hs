@@ -20,10 +20,8 @@ data FeedDescriptor
       { feedUrl         :: String
       , feedTransformer :: FeedTransformer
       }
+    deriving (Show, Read)
 
--- Instances
-instance Show (FeedDescriptor) where
-    show (Feed url _) = url
 
 -- Defaults
 defaultFeed :: FeedDescriptor
