@@ -30,6 +30,11 @@ to subscribe to
 > rct_subscribe_to = ""
 
 
+Where shall the process store the current configuration for persistent
+storage?
+
+> rct_config_file = "~/.rctRssConfig"
+
 > init_string  = Con 1 1 
 > login_string = Mtd (Login 2 rct_username rct_password SHA256)
 > subscribe    = SubStreamNotifyUser 3 rct_subscribe_to

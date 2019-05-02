@@ -11,6 +11,7 @@
 
 module System.RCB.Plugins.RSS.Auxiliary where
 
+import System.RCB.Configuration (rct_config_file)
 import Data.RocketChat.Message
 import Data.RocketChat.Message.Datatype
 import Data.RocketChat.Message.ChangedField
@@ -179,12 +180,12 @@ updateCli notify config = do
 
 store :: RssConfig -> IO ()
 store cfg = do
-  writeFile "/tmp/rssConfig.data" . show $ cfg
+  writeFile rct_config_file . show $ cfg
 
 restore :: MVar RssConfig -> IO ()
 restore config = do
   mvconf <- takeMVar config
-  readFile "/tmp/rssConfig.data" >>= putMVar config . read
+  readFile rct_config_file >>= putMVar config . read
 
 
 helpMsg :: [String]
