@@ -10,6 +10,8 @@
 -------------------------------------------------------------------------------
 
 module System.RCB.Plugins.RSS.RssConfig.Datatype
+    ( RssConfig(..)
+    )
 where
 
 import System.RCB.Plugins.RSS.RssConfig.PushDescriptors

@@ -24,10 +24,15 @@ where
 
 import Data.RocketChat.Message
 import System.RCB.Configuration
+import System.RCB.Plugins.RSS.RssConfig.Datatype
 import System.RCB.Plugins.RSS.Configuration
 import System.RCB.Plugins.RSS.CLI as CLI
 import System.RCB.Plugins.RSS.Push as PUSH
 
+import GHC.IO.Handle.Text
+import GHC.IO.Handle.FD
+import GHC.IO.IOMode
+import Control.Exception
 import Control.Concurrent (forkIO)
 import Control.Concurrent.MVar
 import Control.Monad (forever, void)
@@ -37,7 +42,9 @@ import FRP.Yampa (reactimate)
 
 reactiveWS :: ClientApp ()
 reactiveWS c = do
-  config <- newMVar rssConfig
+  cfg <- readConfigFrom rct_config_file `catch` returnDefaultConfig
+  logReadConfigFrom rct_config_file `catch` logReturnDefaultConfig
+  config <- newMVar cfg
   -- putStrLn "DISABLED: >>> Starting Continuous News Deliverer"
   putStrLn "Starting Continuous News Deliverer"
   void . forkIO . forever $ do
@@ -45,6 +52,13 @@ reactiveWS c = do
 
   putStrLn "Starting Rss Commands"
   reactimate (CLI.initialize config c) (CLI.sense c) (CLI.actuate config c) CLI.process
+
+    where
+      readConfigFrom cfg  = (openFile cfg ReadMode) >>= hGetLine >>= (return . read)
+      returnDefaultConfig = (return . (\e -> const rssConfig (e :: IOException)))
+      logReadConfigFrom cfg  = (openFile cfg ReadMode) >> (putStrLn $ "Restoring RssConfig from file: " ++ cfg)
+      logReturnDefaultConfig = (\e -> const (putStrLn "Using default Configuration") (e :: IOException))
+
 
 main :: IO ()
 main = runSecureClient rct_server rct_port rct_path reactiveWS

@@ -34,7 +34,6 @@ process =
 
 initialize :: MVar RssConfig -> Connection -> IO Message
 initialize config c = do
-    restore config
     mapM (sendAndShow c)
       [ init_string
       , login_string
