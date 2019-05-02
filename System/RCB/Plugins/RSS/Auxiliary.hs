@@ -105,6 +105,18 @@ cli notify config s = do
         notify . foldl (++) "" $ helpMsg
         return False
 
+      "store" -> do
+        mvconf <- readMVar config
+        writeFile "/tmp/rssConfig.data" . show $ mvconf
+        return False
+
+      "restore" -> do
+        cfg_ <- (readFile "/tmp/rssConfig.data")
+        let cfg = (read cfg_ :: RssConfig)
+        mvconf <- takeMVar config
+        putMVar config cfg
+        return False
+
       otherwise -> do
         cfg <- readMVar config
         sequence [ grepFeeds feed fns amount >>= mapM notify | (cmd, Feed feed fns) <- feeds cfg, cmd == (head . words $ s) ]
