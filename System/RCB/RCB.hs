@@ -44,7 +44,7 @@ reactiveWS c = do
       reactimate (PUSH.initialize config c) (PUSH.sense config c) (PUSH.actuate c) PUSH.process
 
   putStrLn "Starting Rss Commands"
-  reactimate (CLI.initialize c) (CLI.sense c) (CLI.actuate config c) CLI.process
+  reactimate (CLI.initialize config c) (CLI.sense c) (CLI.actuate config c) CLI.process
 
 main :: IO ()
 main = runSecureClient rct_server rct_port rct_path reactiveWS

@@ -84,21 +84,20 @@ cli notify config s = do
  
       "add" -> do
         addCli config . unwords . tail . words $ s
+        updateCli notify config
         return False
 
       "del" -> do
         delCli config . unwords . tail . words $ s
+        readMVar config >>= notify . rctify
         return False
 
       "config" -> do
-        cfg <- readMVar config
-        notify . rctify $ cfg
+        readMVar config >>= notify . rctify
         return False 
 
       "update" -> do
-        forkIO . fillRoomIDs $ config
-        cfg <- readMVar config
-        notify . rctify $ cfg
+        updateCli notify config
         return False
 
       "help" -> do
@@ -107,12 +106,11 @@ cli notify config s = do
 
       "store" -> do
         mvconf <- readMVar config
-        writeFile "/tmp/rssConfig.data" . show $ mvconf
+        store mvconf
         return False
 
       "restore" -> do
-        mvconf <- takeMVar config
-        readFile "/tmp/rssConfig.data" >>= putMVar config . read
+        restore config
         return False
 
       otherwise -> do
@@ -132,6 +130,7 @@ addCli config s = do
               | otherwise    = Nothing
           newconf = maybe mvconf (addRssCommand mvconf) (fn . unwords . tail . words $ s)
       putMVar config newconf
+      store newconf
 
     "push" -> do
       mvconf <- takeMVar config
@@ -140,6 +139,7 @@ addCli config s = do
               | otherwise    = Nothing
           newconf = maybe mvconf (addPushToRoom mvconf) (fn . unwords . tail . words $ s)
       putMVar config newconf
+      store newconf
 
     otherwise -> return ()
 
@@ -153,6 +153,7 @@ delCli config s = do
               | otherwise    = Nothing
           newconf = maybe mvconf (delRssCommand mvconf) (fn . unwords . tail . words $ s)
       putMVar config newconf
+      store newconf
 
     "push" -> do
       return ()
@@ -162,8 +163,29 @@ delCli config s = do
               | otherwise    = Nothing
           newconf = maybe mvconf (delPushToRoom mvconf) (fn . unwords . tail . words $ s)
       putMVar config newconf
+      store newconf
 
     otherwise -> return ()
+
+updateCli :: (String -> IO ()) -> MVar RssConfig -> IO ()
+updateCli notify config = do
+  forkIO $ do
+    fillRoomIDs config
+    mvconf <- readMVar config
+    store mvconf
+    notify . rctify $ mvconf
+  return ()
+
+
+store :: RssConfig -> IO ()
+store cfg = do
+  writeFile "/tmp/rssConfig.data" . show $ cfg
+
+restore :: MVar RssConfig -> IO ()
+restore config = do
+  mvconf <- takeMVar config
+  readFile "/tmp/rssConfig.data" >>= putMVar config . read
+
 
 helpMsg :: [String]
 helpMsg =
