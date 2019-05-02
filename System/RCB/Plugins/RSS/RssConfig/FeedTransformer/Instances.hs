@@ -27,13 +27,13 @@ instance Transformable FeedTransformer where
     lfunc (FeedTransformer _ Nothing _) = id
 
     dfunc (FeedTransformer _ _ (Just Dempty)) = const ""
-    dfunc (FeedTransformer _ _ (Just Dimgurl)) = grepImgUrl_local
+    dfunc (FeedTransformer _ _ (Just Dimgurl)) = grepImgUrl
     dfunc (FeedTransformer _ _ Nothing) = id
 
 
 
-grepImgUrl_local :: String -> String
-grepImgUrl_local s = fst $
+grepImgUrl :: String -> String
+grepImgUrl s = fst $
     case (parse pImageTag' "" s) of
       Left err  -> error $ show err
       Right xs  -> xs
