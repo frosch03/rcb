@@ -124,7 +124,6 @@ addCli config s = do
       putMVar config newconf
 
     "push" -> do
-      return ()
       mvconf <- takeMVar config
       let fn s
               | (length . words $ s) > 1 = Just ((Room ((words s)!!0) "" Direct), (words s)!!1)
