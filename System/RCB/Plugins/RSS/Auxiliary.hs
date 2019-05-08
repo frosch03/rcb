@@ -24,6 +24,7 @@ import System.RCB.Plugins.RSS.RssConfig.FeedDescriptor
 import System.RCB.Plugins.RSS.RssConfig.PushDescriptors
 import System.RCB.Plugins.RSS.RssConfig.Modifiers
 import System.RCB.Plugins.RSS.IRocketify
+import System.RCB.Plugins.RSS.ITransformable
 import System.RCB.REST
 import System.RCB.IAscii
 
@@ -36,6 +37,8 @@ import Control.Concurrent.MVar
 import Text.ParserCombinators.Parsec
 import Text.Parsec.Perm
 import Data.Text (Text, pack, unpack)
+import System.Console.CmdArgs.GetOpt
+import System.Console.CmdArgs.Explicit
     
 grepFeeds :: String -> FeedTransformer -> Int -> IO [String]
 grepFeeds feed ftr i = do
@@ -101,6 +104,27 @@ cli notify config s = do
         sequence [ grepFeeds feed fns amount >>= mapM notify | (cmd, Feed feed fns) <- feeds cfg, cmd == (head . words $ s) ]
         return False
   
+parseFeedTransformer :: String -> String -> FeedTransformer
+parseFeedTransformer "title"       "empty"  = (FeedTransformer (Just Tempty) Nothing Nothing)
+parseFeedTransformer "title" "drop_quotes"  = (FeedTransformer (Just Tdrop_quotes) Nothing Nothing)
+parseFeedTransformer "title"       _        = (FeedTransformer Nothing Nothing Nothing)
+parseFeedTransformer "link"        "empty"  = (FeedTransformer Nothing (Just Lempty) Nothing)
+parseFeedTransformer "link"        _        = (FeedTransformer Nothing Nothing Nothing)
+parseFeedTransformer "description" "empty"  = (FeedTransformer Nothing Nothing (Just Dempty))
+parseFeedTransformer "description" "imgurl" = (FeedTransformer Nothing Nothing (Just Dimgurl))
+parseFeedTransformer _             _        = (FeedTransformer Nothing Nothing Nothing)
+
+add_feedtransformer_options :: [OptDescr FeedTransformer]
+add_feedtransformer_options =
+    [ Option ['t'] ["title"] (ReqArg (parseFeedTransformer "title") "function") "set the title transformer function"
+    , Option ['l'] ["link"] (ReqArg (parseFeedTransformer "link") "function") "set the link transformer function"
+    , Option ['d'] ["description"] (ReqArg (parseFeedTransformer "description") "function") "set the description transformer function"
+    ]
+
+parseOptions :: String -> FeedTransformer
+parseOptions s = mconcat fts
+    where
+      (fts, _, _) = getOpt Permute add_feedtransformer_options . words $ s
 
 
 addCli :: MVar RssConfig -> String -> IO ()
@@ -117,10 +141,12 @@ addCli config s = do
 
     "push" -> do
       mvconf <- takeMVar config
-      let fn s
-              | (length . words $ s) > 1 = Just ((Room ((words s)!!0) "" Direct), (words s)!!1)
+      let rst = unwords . tail . words $ s
+          fn str
+              | (length . words $ str) > 1 = Just ((Room ((words str)!!0) "" Direct), (words str)!!1)
               | otherwise    = Nothing
-          newconf = maybe mvconf (addPushToRoom mvconf) (fn . unwords . tail . words $ s)
+          ftr = parseOptions $ unwords . (drop 2) . words $ rst
+          newconf = maybe mvconf (addPushToRoom_ mvconf ftr) (fn . unwords . tail . words $ s)
       putMVar config newconf
       store newconf
 
@@ -177,18 +203,32 @@ helpMsg =
     , "Help Commands\\n"
     , "=============\\n"
     , "\\n"
-    , "add command <Keyword :: String> <URL :: String> - add a new rss command\\n"
-    , "add push <Room :: String> <URL :: String>       - add a feed to be pushed to the room\\n"
-    , "del command <Number :: Int>                     - remove the rss command with the number\\n"
-    , "del push <Number :: Int>                        - remove the push to room with the number\\n"
-    , "config                                          - show the current configuration\\n"
-    , "update                                          - fill in the room id for new room entrys\\n"
-    , "exit                                            - shutdown the bot\\n"
-    , "help                                            - display this screen\\n"
+    , "add command <Keyword :: String> <URL :: String>     - add a new rss command\\n"
+    , "add push <Room :: String> <URL :: String> [Options] - add a feed to be pushed to the room\\n"
+    ] ++ pushOptionHelpMsg ++ 
+    [ "del command <Number :: Int>                         - remove the rss command with the number\\n"
+    , "del push <Number :: Int>                            - remove the push to room with the number\\n"
+    , "config                                              - show the current configuration\\n"
+    , "update                                              - fill in the room id for new room entrys\\n"
+    , "exit                                                - shutdown the bot\\n"
+    , "help                                                - display this screen\\n"
     , "\\n"
     , "```"
     ]
          
+pushOptionHelpMsg :: [String]
+pushOptionHelpMsg =
+      drop 2
+    . map (\x -> x ++ "\\n")
+    . lines
+    . concat
+    . map (\x -> if x == '\\' then "\\\\" else [x])
+    . show
+    . helpText [] HelpFormatDefault
+    . convert ""
+    $ add_feedtransformer_options
+
+
 
 grepData :: RssConfig -> Int -> IO [(String, [String])]
 grepData cfg delay = do

@@ -37,9 +37,9 @@ addRssCommand config (keyword, url) =
     where
       command = (keyword, defaultFeed { feedUrl = url })
 
-addPushToRoom :: RssConfig -> (Room, String) -> RssConfig
-addPushToRoom config (room, url) =
-    maybe (config { pushs = Push ((defaultFeed { feedUrl = url }, [room]) : pushList) timeout })
+addPushToRoom_ :: RssConfig -> FeedTransformer -> (Room, String) -> RssConfig
+addPushToRoom_ config ftr (room, url) =
+    maybe (config { pushs = Push ((defaultFeed { feedUrl = url, feedTransformer = ftr }, [room]) : pushList) timeout })
           (\i -> config { pushs = Push (   (take (i - 1) pushList)
                                        ++ [ (f, room:rooms) | (f@(Feed inner_url _), rooms) <- pushList, inner_url == url ]
                                        ++ (drop i pushList))
@@ -48,6 +48,9 @@ addPushToRoom config (room, url) =
     where
       (Push pushList timeout) = (pushs config)
       position = listToMaybe [ x | (x, (Feed inner_url _, _)) <- zip [1..] pushList, inner_url == url]
+
+addPushToRoom :: RssConfig -> (Room, String) -> RssConfig
+addPushToRoom config = addPushToRoom_ config (feedTransformer defaultFeed)
 
 
 delRssCommand :: RssConfig -> Int -> RssConfig

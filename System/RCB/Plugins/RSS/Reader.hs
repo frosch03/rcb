@@ -38,11 +38,14 @@ data RssItem = RssItem
 -- format
 rss2string :: FeedTransformer -> RssItem -> String
 rss2string ftr itm =
-    "[" ++ (tfunc ftr t) ++ "](" ++ (tfunc ftr l) ++ "): " ++ (dfunc ftr d)
+    "[" ++ (tfunc ftr t) ++ "](" ++ (lfunc ftr l) ++ "): " ++ (dfunc ftr d)
     where
       t = title       itm
       l = link        itm
       d = description itm
+      tfunc = transform . feedTransformer_title
+      lfunc = transform . feedTransformer_link
+      dfunc = transform . feedTransformer_description
 
 -- | Read one feed into a list of rssitems
 readFeed :: Int -> String -> IO [RssItem]
