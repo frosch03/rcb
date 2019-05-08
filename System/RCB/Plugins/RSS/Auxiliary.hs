@@ -24,6 +24,7 @@ import System.RCB.Plugins.RSS.RssConfig.FeedDescriptor
 import System.RCB.Plugins.RSS.RssConfig.PushDescriptors
 import System.RCB.Plugins.RSS.RssConfig.Modifiers
 import System.RCB.Plugins.RSS.IRocketify
+import System.RCB.Plugins.RSS.ITransformable
 import System.RCB.REST
 import System.RCB.IAscii
 

@@ -13,8 +13,6 @@ module System.RCB.Plugins.RSS.ITransformable
 where
 
 class Transformable a where
-      tfunc :: a -> String -> String
-      lfunc :: a -> String -> String
-      dfunc :: a -> String -> String
+      transform :: a -> String -> String
 
 
