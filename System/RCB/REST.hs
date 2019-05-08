@@ -34,14 +34,12 @@ import Text.Parsec.Perm
 
     
 domain :: String
-domain = "abt-rocket.de.bosch.com"
+-- domain = "the server domain"
 
 userId, authTk :: String
 -- userId = "Uncomment and add sensible contetnt"
 -- authTk = "Uncomment and add sensible contetnt"
 
-userId = "Htxddm2HdgSfJABKB"
-authTk = "lyAtePre9PmYEFKvW9Kmoez5-kUsivCB09uQR0tDX6F"
 
 data Presence = Offline | Online
               deriving (Show, Read)
