@@ -18,6 +18,7 @@ import System.RCB.Plugins.RSS.RssConfig.PushDescriptors
 import Data.RocketChat.AuxiliaryParsers
     
 import Network.HTTP.Conduit
+import Network.Connection (TLSSettings(..))
 import Control.Monad.IO.Class
 import qualified Data.ByteString.Char8 as BSC8
 import qualified Data.ByteString.Lazy as LBS
@@ -33,14 +34,14 @@ import Text.Parsec.Perm
 
     
 domain :: String
-domain = "c.frosch03.de"
+domain = "abt-rocket.de.bosch.com"
 
 userId, authTk :: String
 -- userId = "Uncomment and add sensible contetnt"
 -- authTk = "Uncomment and add sensible contetnt"
 
-userId = "dNfBQiWGorDmHwWXR"
-authTk = "mRwPwVYV1e6TNLT-ym4w6NJQs70u_ZpmkGWXHw4YRHL"
+userId = "Htxddm2HdgSfJABKB"
+authTk = "lyAtePre9PmYEFKvW9Kmoez5-kUsivCB09uQR0tDX6F"
 
 data Presence = Offline | Online
               deriving (Show, Read)
@@ -151,17 +152,22 @@ x s =
         ]
     }
 
-test s = newManager tlsManagerSettings >>= \m -> httpLbs (x s) m
+y = mkManagerSettings (TLSSettingsSimple True False False) Nothing
+
+-- test s = newManager tlsManagerSettings >>= \m -> httpLbs (x s) m
+test s = newManager y >>= \m -> httpLbs (x s) m
 
 
 fillRoomIDs :: MVar RssConfig -> IO ()
 fillRoomIDs config = do
   resp_ <- test $ "im.list"
+  putStrLn . show $ resp_
   cfg <- takeMVar config
   let resp = (read . LBSC8.unpack . responseBody $ resp_) :: RestResponse
       ims   = restResponse_ims resp 
       usrs  = Prelude.map room_name $ allRoomsUniq cfg
-  rids <- mapM (directMessageRoomId ims "lambdabot") usrs
+  -- rids <- mapM (directMessageRoomId ims "lambdabot") usrs
+  rids <- mapM (directMessageRoomId ims "bmr2lr") usrs
   let rtois = Prelude.zip usrs rids
       newcfg = updateRooms cfg rtois
   putMVar config newcfg
@@ -266,6 +272,16 @@ data ImList
       , imList_msgs :: Int
       , imList_ts :: String
       , imList_usercount :: Int
+      }
+    | ImListNoLast2
+      { imList_id :: String
+      , imList_usernames :: [String]
+      , imList_updatedAt :: String
+      , imList_t :: String
+      , imList_msgs :: Int
+      , imList_ts :: String
+      , imList_usercount :: Int
+      , imList_lm :: String
       }
     deriving (Show)
 
@@ -389,6 +405,7 @@ pRestImList :: GenParser Char st ImList
 pRestImList = do
       (try pRestImList')
   <|> (try pRestImListNoLM)
+  <|> (try pRestImListNoLM2)
 
 pRestImList' :: GenParser Char st ImList
 pRestImList' = do
@@ -437,6 +454,30 @@ pRestImListNoLM = do
          )
   char '}'
   return $ ImListNoLast id uname updatedAt t msgs ts ucount
+
+pRestImListNoLM2 :: GenParser Char st ImList
+pRestImListNoLM2 = do
+  char '{'
+  (id, uname, updatedAt, t, msgs, ts, ucount, lm) <- permute
+         (    (\a _ b _ c _ d _ e _ f _ g _ h -> (a,b,c,d,e,f,g,h))
+         <$$> (try $ pValOfKey "_id")
+         <||> (char ',')
+         <||> (try $ pValsOfKey "usernames")
+         <||> (char ',')
+         <||> (try $ pValOfKey "_updatedAt")
+         <||> (char ',')
+         <||> (try $ pValOfKey "t")
+         <||> (char ',')
+         <||> (try $ pIntOfKey "msgs")
+         <||> (char ',')
+         <||> (try $ pValOfKey "ts")
+         <||> (char ',')
+         <||> (try $ pIntOfKey "usersCount")
+         <||> (char ',')
+         <||> (try $ pValOfKey "lm")
+         )
+  char '}'
+  return $ ImListNoLast2 id uname updatedAt t msgs ts ucount lm
   
 
 

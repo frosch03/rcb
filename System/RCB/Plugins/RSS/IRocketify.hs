@@ -22,8 +22,23 @@ class Rocketify a where
     rctify :: a -> String
 
 instance Rocketify RssConfig where
-    rctify (RssConfig fds@(fd_:fds_) (Push pss@(ps_:pss_) timeout)) =
-        foldl (++) "" $
+  rctify (RssConfig fds@(fd_:fds_) (Push pss timeout))
+        | length pss == 0
+        = foldl (++) "" $
+                 [ "```"
+                 , "\\n"
+                 , "Feed Commands\\n"
+                 , "=============\\n"
+                 , "\\n"
+                 , "usage: <command> [amount]\\n"
+                 , "  amount - number of entries to be retrieved\\n"
+                 , "\\n"
+                 , fds_header
+                 , fds_hline
+                 ]
+              ++ fds_string
+        | otherwise
+        = foldl (++) "" $
                  [ "```"
                  , "\\n"
                  , "Feed Commands\\n"

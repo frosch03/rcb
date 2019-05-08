@@ -49,6 +49,8 @@ readFeed :: Int -> String -> IO [RssItem]
 readFeed n url = do
     let urlBS = BSU.fromString url
     c <- (get urlBS concatHandler) >>= (\x -> return $ BSU.toString x)
+    putStrLn "c: "
+    putStrLn c
     let items = getChildren "item" [] $ parseTags c
     return . limitItems n . catMaybes $ map readItem items
 

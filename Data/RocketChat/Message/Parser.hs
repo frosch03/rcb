@@ -120,7 +120,7 @@ pResult = do
          (    (\a _ b -> (a, b))
          <$$> (try $ pValOfKey "id")
          <||> (char ',')
-         <||> (try pResultField <|> try pResultField2 <|> try pResultField3 <|> try pResultFieldError)
+         <||> (try pResultField <|> try pResultField2 <|> try pResultField3 <|> try pResultField4 <|> try pResultFieldError)
          )
   char '}'
   return $ Result (read id) rf

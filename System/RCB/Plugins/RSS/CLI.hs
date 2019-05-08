@@ -45,7 +45,7 @@ initialize config c = do
 sense :: Connection -> Bool -> IO (DTime, Maybe Message)
 sense c _ = do
     raw <- receiveData c
-    -- putStrLn . unpack $ raw
+    putStrLn . unpack $ raw
     let msg = read . unpack $ raw :: Message
     if (msg == Ping) 
        then (send c $ Pong) >> return (0.0, Nothing)
