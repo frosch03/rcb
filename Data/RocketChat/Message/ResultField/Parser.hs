@@ -101,6 +101,35 @@ pResultField3 = do
   return $ RF3 id1 rid msg date1 u date2 urls [] []
 
 
+pResultField4 :: GenParser Char st ResultField
+pResultField4 = do
+  string "\"result\":{"
+  (id1, rid, msg, date1, alias, u, date2) <- permute
+    (    (\a _ b _ c _ d _ e _ g _ h _ _ _ _ -> (a,b,c,d,e,g,h))
+    <$$> (try $ pValOfKey "_id")
+    <||> (char ',') 
+    <||> (try $ pValOfKey "rid") 
+    <||> (char ',') 
+    <||> (try $ pValOfKey "msg")
+    <||> (char ',') 
+    <||> (try $ pDollarDate "ts")
+    <||> (char ',') 
+    <||> (try $ pValOfKey "alias")
+    <||> (char ',') 
+    <||> (try $ string "\"u\":" >> pUser)
+    <||> (char ',') 
+    <||> (try $ pDollarDate "_updatedAt")
+    <||> (char ',') 
+    -- <||> (try $ pUrls)
+    -- <||> (char ',') 
+    <||> (try $ string "\"mentions\":[]")
+    <||> (char ',') 
+    <||> (try $ string "\"channels\":[]")
+    )
+  char '}'
+  return $ RF4 id1 rid msg date1 alias u date2 [] []
+
+
 -- "{\"msg\":\"result\",\"id\":\"81216\",\"error\":{\"isClientSafe\":true,\"error\":\"error-invalid-room\",\"reason\":\"Invalid room\",\"details\":{\"method\":\"canAccessRoom\"},\"message\":\"Invalid room [error-invalid-room]\",\"errorType\":\"Meteor.Error\"}}"
 -- error :: (ER2)
 --   isClientSafe :: Bool

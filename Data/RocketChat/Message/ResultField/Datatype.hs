@@ -40,6 +40,18 @@ data ResultField
       , rf3_mentions  :: [String]
       , rf3_channels  :: [String]
       }
+    | RF4
+      { rf4_Id        :: String
+      , rf4rId        :: String
+      , rf4msg        :: String
+      , rf4Ts         :: (Int)
+      , rf4alias      :: String
+      , rf4U          :: (String, String, String)
+      , rf4_updatedAt :: (Int)
+      -- , rf4_urls      :: [String]
+      , rf4_mentions  :: [String]
+      , rf4_channels  :: [String]
+      }
     | ER1
       { er1IsClientSafe :: Bool
       , er1Error        :: Int

@@ -36,9 +36,12 @@ import Control.Exception
 import Control.Concurrent (forkIO)
 import Control.Concurrent.MVar
 import Control.Monad (forever, void)
-import Network.WebSockets (ClientApp)
-import Wuss (runSecureClient)
+import Network.WebSockets --(ClientApp)
+import Network.Connection
+import Wuss --(runSecureClient)
 import FRP.Yampa (reactimate)
+import Data.ByteString.Lazy (toStrict)
+import Network.WebSockets.Stream (makeStream)
 
 reactiveWS :: ClientApp ()
 reactiveWS c = do
@@ -60,7 +63,26 @@ reactiveWS c = do
       logReturnDefaultConfig = (\e -> const (putStrLn "Using default Configuration") (e :: IOException))
 
 
-main :: IO ()
-main = runSecureClient rct_server rct_port rct_path reactiveWS
-
+options = defaultConnectionOptions
+headers = []
+tlsSettings = TLSSettingsSimple
+    { settingDisableCertificateValidation = True
+    , settingDisableSession = False
+    , settingUseServerName  = False
+    }
+connectionParams = ConnectionParams
+    { connectionHostname  = rct_server
+    , connectionPort      = rct_port
+    , connectionUseSecure = Just tlsSettings
+    , connectionUseSocks  = Nothing
+    }
     
+main :: IO ()
+-- main = runSecureClient rct_server rct_port rct_path reactiveWS
+main = do
+  context <- initConnectionContext
+  connection <- connectTo context connectionParams
+  stream <- makeStream
+      (fmap Just (connectionGetChunk connection))
+      (maybe (return ()) (connectionPut connection . toStrict))
+  runClientWithStream stream rct_server rct_path options headers reactiveWS
