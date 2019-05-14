@@ -1,0 +1,33 @@
+> module System.RCB.Plugins.RSS.Configuration where
+>
+> import System.RCB.Plugins.RSS.RssConfig.Datatype
+> import System.RCB.Plugins.RSS.RssConfig.FeedDescriptor
+> import System.RCB.Plugins.RSS.RssConfig.PushDescriptors
+> import System.RCB.Plugins.RSS.RssConfig.FeedTransformer
+> import Data.RocketChat.Message.Datatype
+
+> import System.RCB.Plugins.RSS.Auxiliary
+
+This is the configuration file of the RSS plugin.
+
+Here the initial definition of the feeds and feed commands:
+
+> rssConfig :: RssConfig
+> rssConfig =
+>     RssConfig
+>     { feeds =
+>           [ ("xkcd", Feed "https://www.xkcd.com/rss.xml" (FeedTransformer Nothing Nothing (Just Dimgurl)))
+>           , ("fefe", Feed "https://blog.fefe.de/rss.xml?html" (FeedTransformer (Just Tdrop_quotes) Nothing (Just Dempty)))
+>           , ("heise", Feed "http://www.heise.de/newsticker/heise.rdf" (FeedTransformer Nothing Nothing (Just Dempty)))
+>           , ("golem", Feed "https://rss.golem.de/rss.php?feed=RSS2.0" (FeedTransformer Nothing Nothing (Just Dempty)))
+>           , ("hackernews", Feed "https://news.ycombinator.com/rss" (FeedTransformer Nothing Nothing (Just Dempty)))
+>           ]
+> 
+>     , pushs =
+>           Push
+>             [ (Feed "https://news.ycombinator.com/rss" (FeedTransformer Nothing Nothing (Just Dempty)), [Room "user" "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" Direct])
+>             , (Feed "https://www.xkcd.com/rss.xml" (FeedTransformer Nothing Nothing (Just Dimgurl)), [Room "user" "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" Direct])
+>             , (Feed "https://blog.fefe.de/rss.xml?html" (FeedTransformer (Just Tdrop_quotes) Nothing (Just Dempty)), [Room "user" "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" Direct])
+>             ]
+>             (6 * 60)
+>     }
