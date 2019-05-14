@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- | Module      :  System.RCB.Plugins.RSS.IRocketify
+-- | Module      :  System.RCB.IRocketify
 --   Copyright   :  (c) Matthias Brettschneider 2019
 --   License     :  as-is
 --
@@ -9,17 +9,65 @@
 --
 -------------------------------------------------------------------------------
 
-module System.RCB.Plugins.RSS.IRocketify
+module System.RCB.IRocketify
 where
 
+import System.RCB.Room
 import System.RCB.Plugins.RSS.RssConfig.Datatype
 import System.RCB.Plugins.RSS.RssConfig.FeedDescriptor
 import System.RCB.Plugins.RSS.RssConfig.PushDescriptors
+import System.RCB.Plugins.REST.JiraConfig
 
 import Data.List (groupBy, group, sort)
 
 class Rocketify a where
     rctify :: a -> String
+
+instance Rocketify JiraConfig where
+  rctify (JiraConfig pss timeout)
+        | length pss == 0
+        = ""
+
+        | otherwise
+        = foldl (++) "" $
+                 [ "```"
+                 , "\\n"
+                 , "Jira Queries\\n"
+                 , "============\\n"
+                 , "\\n"
+                 , "update every " ++ show timeout ++ "s\\n"
+                 , "\\n"
+                 , pss_header
+                 , pss_phline
+                 ]
+              ++ pss_string
+              ++ [ "```" ]
+            where
+              max_proom = foldl (\b (_, rs) -> max b $ (maximum . map (length . room_name) $ rs)) 0 pss
+              max_purl  = foldl (\b (s, _) -> max b $ length s) 0 pss
+              max_pnum  = length . show . length $ pss
+              pss_cntexp = zip [1..] (concat [ map ((,) (url)) rooms | (url, rooms) <- pss ])
+              pss_cegrp  = groupBy (\(_, (x, _)) (_, (y, _)) -> x == y) pss_cntexp
+              toString mN mP1 (nr, par1, par2) =    nr   ++ ((mN -  (length nr))   `replicate` ' ') ++ " "
+                                                 ++ par1 ++ ((mP1 - (length par1)) `replicate` ' ') ++ " -> "
+                                                 ++ par2                                            ++ "\\n"
+              toString3 mN mP1 mP2 (nr, par1, par2, par3) =    nr   ++ ((mN -  (length nr))   `replicate` ' ') ++ " "
+                                                            ++ par1 ++ ((mP1 - (length par1)) `replicate` ' ') ++ " -> "
+                                                            ++ par2 ++ ((mP2 - (length par2)) `replicate` ' ') ++ " "
+                                                            ++ par3                                            ++ "\\n"
+              withRoom (x,y) (Room u r _)
+                  | length r == 0 = (x, y, u, "[ ]")
+                  | otherwise    = (x, y, u, "[X]")
+              pss_header = toString3 max_pnum max_purl max_proom ("#", "JQL", "Rooms", "ID")
+              pss_phline = (++ "\\n") $ (max_pnum + 1 + max_purl + 4 + max_proom + 1 + 3) `replicate` '-'
+              pss_string = concat $ map (\(x:xs) ->
+                                             (     ((toString3 max_pnum max_purl max_proom) . (\(nr, (url, room)) -> withRoom (show nr, url) room)) x
+                                             : map ((toString3 max_pnum max_purl max_proom) . (\(nr, (_, room)) -> withRoom (show nr, "")  room)) xs
+                                             )
+                                        ) pss_cegrp
+
+
+
 
 instance Rocketify RssConfig where
   rctify (RssConfig fds@(fd_:fds_) (Push pss timeout))
