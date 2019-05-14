@@ -19,6 +19,7 @@ import Text.Printf (printf)
 import Data.Time.Clock (diffTimeToPicoseconds, utctDayTime, getCurrentTime)
 import Text.Read (readMaybe)
 import FRP.Yampa (SF, arr, loopPre)
+import System.IO
 
 
 secondsOfTheDay :: IO Int
@@ -63,3 +64,12 @@ isNew (xs, ys)
 sec2µs :: Int -> Int
 sec2µs =
     floor . (* 1E6) . fromIntegral
+
+
+store :: Show a => String -> a -> IO ()
+store filename cfg = do
+  putStrLn $ "Storing into: " ++ filename
+  handle <- openFile filename WriteMode
+  hPutStr handle . show $ cfg
+  hClose handle
+

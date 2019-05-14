@@ -186,17 +186,15 @@ updateCli notify config = do
     notify . rctify $ mvconf
   return ()
 
-
-store :: RssConfig -> IO ()
-store cfg = do
-  writeFile rct_config_file . show $ cfg
-
 restore :: MVar RssConfig -> IO ()
-restore config = do
-  mvconf <- takeMVar config
-  readFile rct_config_file >>= putMVar config . read
-
-
+restore rssconfig = do
+  putStrLn $ "Restoring: rss configuration" 
+  mvconf <- takeMVar rssconfig
+  handle <- openFile rct_config_file ReadMode
+  line <- hGetLine handle
+  hClose handle
+  putMVar rssconfig . read $ line
+ 
 helpMsg :: [String]
 helpMsg =
     [ "```"
