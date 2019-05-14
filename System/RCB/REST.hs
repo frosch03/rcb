@@ -16,6 +16,8 @@ import System.RCB.Room
 import System.RCB.Plugins.RSS.RssConfig.Datatype
 import System.RCB.Plugins.RSS.RssConfig.Modifiers
 import System.RCB.Plugins.RSS.RssConfig.PushDescriptors
+import System.RCB.Plugins.REST.JiraConfig
+import System.RCB.Plugins.REST.Modifiers
 import Data.RocketChat.AuxiliaryParsers
     
 import Network.HTTP.Conduit
@@ -38,8 +40,8 @@ domain :: String
 -- domain = "the server domain"
 
 userId, authTk :: String
--- userId = "Uncomment and add sensible contetnt"
--- authTk = "Uncomment and add sensible contetnt"
+-- userId = "Uncomment and add sensible content"
+-- authTk = "Uncomment and add sensible content"
 
 
 data Presence = Offline | Online
@@ -157,19 +159,32 @@ y = mkManagerSettings (TLSSettingsSimple True False False) Nothing
 test s = newManager y >>= \m -> httpLbs (x s) m
 
 
-fillRoomIDs :: MVar RssConfig -> IO ()
-fillRoomIDs config = do
+fillRoomIDs :: (MVar RssConfig, MVar JiraConfig) -> IO ()
+fillRoomIDs (rssconfig, _) = fillRSSRoomIDs rssconfig
+
+fillRSSRoomIDs :: MVar RssConfig -> IO ()
+fillRSSRoomIDs rssconfig = do
   resp_ <- test $ "im.list"
-  putStrLn . show $ resp_
-  cfg <- takeMVar config
+  rsscfg  <- takeMVar rssconfig
   let resp = (read . LBSC8.unpack . responseBody $ resp_) :: RestResponse
-      ims   = restResponse_ims resp 
-      usrs  = Prelude.map room_name $ allRoomsUniq cfg
-  -- rids <- mapM (directMessageRoomId ims "lambdabot") usrs
-  rids <- mapM (directMessageRoomId ims "bmr2lr") usrs
-  let rtois = Prelude.zip usrs rids
-      newcfg = updateRooms cfg rtois
-  putMVar config newcfg
+      ims  = restResponse_ims resp
+      rssusrs  = Prelude.map room_name $ allRoomsUniq rsscfg
+  rrids <- mapM (directMessageRoomId ims "ENTER BOT NAME HERE") rssusrs
+  let rrtois = Prelude.zip rssusrs rrids
+      newrsscfg = updateRooms rsscfg rrtois
+  putMVar rssconfig newrsscfg
+
+fillJiraRoomIDs :: MVar JiraConfig -> IO ()
+fillJiraRoomIDs jiraconfig = do
+  resp_ <- test $ "im.list"
+  jiracfg <- takeMVar jiraconfig
+  let resp = (read . LBSC8.unpack . responseBody $ resp_) :: RestResponse
+      ims  = restResponse_ims resp 
+      jirausrs = Prelude.map room_name $ allJiraRoomsUniq jiracfg
+  jrids <- mapM (directMessageRoomId ims "ENTER BOT NAME HERE") jirausrs
+  let jrtois = Prelude.zip jirausrs jrids
+      newjiracfg = updateJiraRooms jiracfg jrtois
+  putMVar jiraconfig newjiracfg
 
 directMessageRoomId :: [ImList] -> String -> String -> IO String
 directMessageRoomId ims fromUser toUser = do
