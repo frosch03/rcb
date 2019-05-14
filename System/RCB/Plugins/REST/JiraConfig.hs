@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- | Module      :  System.RCB.Plugins.RSS.RssConfig.PushDescriptors
+-- | Module      :  System.RCB.Plugins.REST.JiraConfig
 --   Copyright   :  (c) Matthias Brettschneider 2019
 --   License     :  as-is
 --
@@ -9,16 +9,14 @@
 --
 -------------------------------------------------------------------------------
 
-module System.RCB.Plugins.RSS.RssConfig.PushDescriptors
-where
+module System.RCB.Plugins.REST.JiraConfig where
 
 import System.RCB.Room
-import System.RCB.Plugins.RSS.RssConfig.FeedDescriptor
 
--- Datatype
-data PushDescriptors
-    = Push
-      { pushFeedIntoRoomss :: [(FeedDescriptor, [Room])]
-      , pushInterval       :: Int
+data JiraConfig
+    = JiraConfig
+      { jiraPushs :: [(String, [Room])]
+      , jiraInterval :: Int
       }
     deriving (Show, Read, Eq)
+

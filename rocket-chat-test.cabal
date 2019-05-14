@@ -33,7 +33,8 @@ library
                        wuss,
                        tagsoup,
                        http-streams,
-                       utf8-string
+                       utf8-string,
+                       json
                        
   -- hs-source-dirs:
   default-language:    Haskell2010

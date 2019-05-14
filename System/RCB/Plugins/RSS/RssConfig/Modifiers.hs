@@ -12,10 +12,13 @@
 module System.RCB.Plugins.RSS.RssConfig.Modifiers
 where
 
+import System.RCB.Room
 import System.RCB.Plugins.RSS.RssConfig.Datatype
 import System.RCB.Plugins.RSS.RssConfig.PushDescriptors
 import System.RCB.Plugins.RSS.RssConfig.FeedDescriptor
 import System.RCB.Plugins.RSS.RssConfig.FeedTransformer
+
+import System.RCB.Plugins.REST.JiraConfig
 
 import Data.List (groupBy, group, sort)
 import Data.Maybe (listToMaybe, maybe)
@@ -49,6 +52,18 @@ addPushToRoom_ config ftr (room, url) =
       (Push pushList timeout) = (pushs config)
       position = listToMaybe [ x | (x, (Feed inner_url _, _)) <- zip [1..] pushList, inner_url == url]
 
+addJqlToRoom :: JiraConfig -> (Room, String) -> JiraConfig
+addJqlToRoom config (room, url) =
+    maybe (config { jiraPushs = ((url, [room]) : pushList) })
+          (\i -> config { jiraPushs = (    (take (i - 1) pushList)
+                                       ++ [ (inner_url, room:rooms) | (inner_url, rooms) <- pushList, inner_url == url ]
+                                       ++ (drop i pushList))
+                       })
+          position
+    where
+      pushList = (jiraPushs config)
+      position = listToMaybe [ x | (x, (inner_url, _)) <- zip [1..] pushList, inner_url == url]
+
 addPushToRoom :: RssConfig -> (Room, String) -> RssConfig
 addPushToRoom config = addPushToRoom_ config (feedTransformer defaultFeed)
 
@@ -68,6 +83,17 @@ delPushToRoom config i =
       pushs' =  map (foldl (\(_, brooms) (a, aroom) -> (uncurry Feed a, (aroom:brooms))) (Feed "" (FeedTransformer Nothing Nothing Nothing), []))
                     pushs_cegrp'
 
+delJqlFromRoom :: JiraConfig -> Int -> JiraConfig
+delJqlFromRoom config i =
+    config { jiraPushs = pushs' }
+    where
+      pushList = jiraPushs config
+      pushs_cntexp = (concat [ map ((,) url) rooms | (url, rooms) <- pushList ])
+      pushs_cegrp  = (take (i - 1) pushs_cntexp ++ drop i pushs_cntexp)
+      pushs_cegrp' = groupBy (\(x, _) (y, _) -> x == y) pushs_cegrp
+      pushs' =  map (foldl (\(_, brooms) (a, aroom) -> (a, (aroom:brooms))) ("", []))
+                    pushs_cegrp'
+
 updateRooms :: RssConfig -> [(String, String)] -> RssConfig
 updateRooms config rtoid = 
     config { pushs = Push pushs' timeout }
@@ -83,6 +109,23 @@ updateRooms config rtoid =
       pushs_ceupd = foldr fn [] pushs_cntexp
       pushs_cegrp  = groupBy (\((x, _), _) ((y, _), _) -> x == y) pushs_ceupd
       pushs' =  map (foldl (\(_, brooms) (a, aroom) -> (uncurry Feed a, (aroom:brooms))) (Feed "" (FeedTransformer Nothing Nothing Nothing), []))
+                    pushs_cegrp
+
+updateJiraRooms :: JiraConfig -> [(String, String)] -> JiraConfig
+updateJiraRooms config rtoid = 
+    config { jiraPushs = pushs' }
+    where
+      pushList = jiraPushs config
+      pushs_cntexp = (concat [ map ((,) url) rooms | (url, rooms) <- pushList ])
+      fn cur@(c1_, (Room cname cid ct)) news
+          | length cid == 0 && (length . filter ((== cname) . fst) $ rtoid) > 0
+          = (c1_, Room cname (snd . head . filter ((== cname) . fst) $ rtoid) ct):news
+
+          | otherwise
+          = cur:news
+      pushs_ceupd = foldr fn [] pushs_cntexp
+      pushs_cegrp  = groupBy (\(x, _) (y, _) -> x == y) pushs_ceupd
+      pushs' =  map (foldl (\(_, brooms) (a, aroom) -> (a, (aroom:brooms))) ("" , []))
                     pushs_cegrp
 
 

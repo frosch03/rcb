@@ -11,23 +11,28 @@
 
 module System.RCB.Plugins.RSS.Auxiliary where
 
-import System.RCB.Configuration (rct_config_file)
 import Data.RocketChat.Message
 import Data.RocketChat.Message.Datatype
 import Data.RocketChat.Message.ChangedField
 import Data.RocketChat.Message.ChangedField.ChangedFieldArgs
+import System.RCB.Room
+import System.RCB.REST
 import System.RCB.Auxiliary
+import System.RCB.Configuration (rct_config_file, rct_jira_config_file)
 import System.RCB.Plugins.RSS.Reader (readFeed, rss2string)
 import System.RCB.Plugins.RSS.RssConfig.Datatype
 import System.RCB.Plugins.RSS.RssConfig.FeedTransformer
 import System.RCB.Plugins.RSS.RssConfig.FeedDescriptor
 import System.RCB.Plugins.RSS.RssConfig.PushDescriptors
 import System.RCB.Plugins.RSS.RssConfig.Modifiers
-import System.RCB.Plugins.RSS.IRocketify
 import System.RCB.Plugins.RSS.ITransformable
-import System.RCB.REST
+import System.RCB.Plugins.REST.JiraConfig
+import System.RCB.Plugins.REST.Auxiliary
+import System.RCB.IRocketify
 import System.RCB.IAscii
 
+
+import System.IO
 import Control.Concurrent (forkIO)
 import Control.Concurrent       (threadDelay)
 import Text.Read (readMaybe)
@@ -40,6 +45,7 @@ import Data.Text (Text, pack, unpack)
 import System.Console.CmdArgs.GetOpt
 import System.Console.CmdArgs.Explicit
     
+
 grepFeeds :: String -> FeedTransformer -> Int -> IO [String]
 grepFeeds feed ftr i = do
   xs <- readFeed i feed
@@ -62,28 +68,40 @@ getText _ =
     Nothing
     
 
-cli :: (String -> IO ()) -> MVar RssConfig -> String -> IO Bool
-cli notify config s = do
+cli :: (String -> IO ()) -> (MVar RssConfig, MVar JiraConfig) -> String -> IO Bool
+cli notify (rssconfig, jiraconfig) s = do
     let amount = maybe 1 id $ countFromMsg s
     case (head . words $ s) of
       "exit" -> return True
  
       "add" -> do
-        addCli config . unwords . tail . words $ s
-        updateCli notify config
+        addCli (rssconfig, jiraconfig) . unwords . tail . words $ s
+        updateCli notify rssconfig
         return False
 
       "del" -> do
-        delCli config . unwords . tail . words $ s
-        readMVar config >>= notify . rctify
+        delCli (rssconfig, jiraconfig) . unwords . tail . words $ s
+        readMVar rssconfig >>= notify . rctify
         return False
 
       "config" -> do
-        readMVar config >>= notify . rctify
+        readMVar rssconfig  >>= notify . rctify
+        readMVar jiraconfig >>= notify . rctify
+        return False 
+
+      "rssconfig" -> do
+        readMVar rssconfig >>= notify . rctify
+        return False 
+
+      "jiraconfig" -> do
+        readMVar jiraconfig >>= notify . rctify
         return False 
 
       "update" -> do
-        updateCli notify config
+        putStrLn "updateCli rssconfig"
+        updateCli notify rssconfig
+        putStrLn "updateCli jiraconfig"
+        updateJiraCli notify jiraconfig
         return False
 
       "help" -> do
@@ -91,16 +109,19 @@ cli notify config s = do
         return False
 
       "store" -> do
-        mvconf <- readMVar config
-        store mvconf
+        mvrssconf <- readMVar rssconfig
+        store rct_config_file mvrssconf
+        mvjiraconf <- readMVar jiraconfig
+        store rct_jira_config_file mvjiraconf
         return False
 
       "restore" -> do
-        restore config
+        restore rssconfig
+        restoreJira jiraconfig
         return False
 
       otherwise -> do
-        cfg <- readMVar config
+        cfg <- readMVar rssconfig
         sequence [ grepFeeds feed fns amount >>= mapM notify | (cmd, Feed feed fns) <- feeds cfg, cmd == (head . words $ s) ]
         return False
   
@@ -127,75 +148,94 @@ parseOptions s = mconcat fts
       (fts, _, _) = getOpt Permute add_feedtransformer_options . words $ s
 
 
-addCli :: MVar RssConfig -> String -> IO ()
-addCli config s = do
+addCli :: (MVar RssConfig, MVar JiraConfig) -> String -> IO ()
+addCli (rssconfig, jiraconfig) s = do
   case (head . words $ s) of
     "command" -> do
-      mvconf <- takeMVar config
+      mvconf <- takeMVar rssconfig
       let fn s
               | (length . words $ s) > 1 = Just ((words s)!!0, (words s)!!1)
               | otherwise    = Nothing
           newconf = maybe mvconf (addRssCommand mvconf) (fn . unwords . tail . words $ s)
-      putMVar config newconf
-      store newconf
+      putMVar rssconfig newconf
+      store rct_config_file newconf
 
     "push" -> do
-      mvconf <- takeMVar config
+      mvconf <- takeMVar rssconfig
       let rst = unwords . tail . words $ s
           fn str
               | (length . words $ str) > 1 = Just ((Room ((words str)!!0) "" Direct), (words str)!!1)
               | otherwise    = Nothing
           ftr = parseOptions $ unwords . (drop 2) . words $ rst
           newconf = maybe mvconf (addPushToRoom_ mvconf ftr) (fn . unwords . tail . words $ s)
-      putMVar config newconf
-      store newconf
+      putMVar rssconfig newconf
+      store rct_config_file newconf
+
+    "jql" -> do
+      mvconf <- takeMVar jiraconfig
+      let rst = unwords . tail . words $ s
+          fn str
+              | (length . words $ str) > 1 = Just ((Room ((words str)!!0) "" Direct), (words str)!!1)
+              | otherwise    = Nothing
+          newconf = maybe mvconf (addJqlToRoom mvconf) (fn . unwords . tail . words $ s)
+      putStrLn $ show newconf
+      putMVar jiraconfig newconf
+      store rct_jira_config_file newconf
 
     otherwise -> return ()
 
-delCli :: MVar RssConfig -> String -> IO ()
-delCli config s = do
+delCli :: (MVar RssConfig, MVar JiraConfig) -> String -> IO ()
+delCli (rssconfig, jiraconfig) s = do
   case (head . words $ s) of
     "command" -> do
-      mvconf <- takeMVar config
+      mvconf <- takeMVar rssconfig
       let fn s
               | (length . words $ s) > 0 = readMaybe $ (words s)!!0
               | otherwise    = Nothing
           newconf = maybe mvconf (delRssCommand mvconf) (fn . unwords . tail . words $ s)
-      putMVar config newconf
-      store newconf
+      putMVar rssconfig newconf
+      store rct_config_file newconf
 
     "push" -> do
       return ()
-      mvconf <- takeMVar config
+      mvconf <- takeMVar rssconfig
       let fn s
               | (length . words $ s) > 0 = readMaybe $ (words s)!!0
               | otherwise    = Nothing
           newconf = maybe mvconf (delPushToRoom mvconf) (fn . unwords . tail . words $ s)
-      putMVar config newconf
-      store newconf
+      putMVar rssconfig newconf
+      store rct_config_file newconf
+
+    "jql" -> do
+      return ()
+      mvconf <- takeMVar jiraconfig
+      let fn s
+              | (length . words $ s) > 0 = readMaybe $ (words s)!!0
+              | otherwise    = Nothing
+          newconf = maybe mvconf (delJqlFromRoom mvconf) (fn . unwords . tail . words $ s)
+      putMVar jiraconfig newconf
+      store rct_jira_config_file newconf
 
     otherwise -> return ()
 
 updateCli :: (String -> IO ()) -> MVar RssConfig -> IO ()
 updateCli notify config = do
   forkIO $ do
-    fillRoomIDs config
+    fillRSSRoomIDs config
     mvconf <- readMVar config
-    store mvconf
+    store rct_config_file mvconf
     notify . rctify $ mvconf
   return ()
 
-
-store :: RssConfig -> IO ()
-store cfg = do
-  writeFile rct_config_file . show $ cfg
-
 restore :: MVar RssConfig -> IO ()
-restore config = do
-  mvconf <- takeMVar config
-  readFile rct_config_file >>= putMVar config . read
-
-
+restore rssconfig = do
+  putStrLn $ "Restoring: rss configuration" 
+  mvconf <- takeMVar rssconfig
+  handle <- openFile rct_config_file ReadMode
+  line <- hGetLine handle
+  hClose handle
+  putMVar rssconfig . read $ line
+ 
 helpMsg :: [String]
 helpMsg =
     [ "```"
@@ -206,12 +246,18 @@ helpMsg =
     , "add command <Keyword :: String> <URL :: String>     - add a new rss command\\n"
     , "add push <Room :: String> <URL :: String> [Options] - add a feed to be pushed to the room\\n"
     ] ++ pushOptionHelpMsg ++ 
-    [ "del command <Number :: Int>                         - remove the rss command with the number\\n"
-    , "del push <Number :: Int>                            - remove the push to room with the number\\n"
-    , "config                                              - show the current configuration\\n"
-    , "update                                              - fill in the room id for new room entrys\\n"
-    , "exit                                                - shutdown the bot\\n"
-    , "help                                                - display this screen\\n"
+    [ "add jql <Room :: String> <JQL :: String> - add a feed to be pushed to the room\\n"
+    , "del command <Number :: Int>              - remove the rss command with the number\\n"
+    , "del push <Number :: Int>                 - remove the push to room with the number\\n"
+    , "del jql <Number :: Int>                  - remove the jql of room with the number\\n"
+    , "config                                   - show both current configurations\\n"
+    , "rssconfig                                - show the current rss configuration\\n"
+    , "jiraconfig                               - show the current jira configuration\\n"
+    , "update                                   - fill in the room id for new room entrys\\n"
+    , "store                                    - storing the current configurations into local files\\n"
+    , "restore                                  - restoring from local files the configurations \\n"
+    , "exit                                     - shutdown the bot\\n"
+    , "help                                     - display this screen\\n"
     , "\\n"
     , "```"
     ]
