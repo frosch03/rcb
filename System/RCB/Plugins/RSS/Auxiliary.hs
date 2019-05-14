@@ -16,6 +16,7 @@ import Data.RocketChat.Message
 import Data.RocketChat.Message.Datatype
 import Data.RocketChat.Message.ChangedField
 import Data.RocketChat.Message.ChangedField.ChangedFieldArgs
+import System.RCB.Room
 import System.RCB.Auxiliary
 import System.RCB.Plugins.RSS.Reader (readFeed, rss2string)
 import System.RCB.Plugins.RSS.RssConfig.Datatype

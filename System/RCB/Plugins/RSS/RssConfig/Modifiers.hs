@@ -12,6 +12,7 @@
 module System.RCB.Plugins.RSS.RssConfig.Modifiers
 where
 
+import System.RCB.Room
 import System.RCB.Plugins.RSS.RssConfig.Datatype
 import System.RCB.Plugins.RSS.RssConfig.PushDescriptors
 import System.RCB.Plugins.RSS.RssConfig.FeedDescriptor

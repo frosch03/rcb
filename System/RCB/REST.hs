@@ -12,6 +12,7 @@
 module System.RCB.REST
 where
 
+import System.RCB.Room
 import System.RCB.Plugins.RSS.RssConfig.Datatype
 import System.RCB.Plugins.RSS.RssConfig.Modifiers
 import System.RCB.Plugins.RSS.RssConfig.PushDescriptors
