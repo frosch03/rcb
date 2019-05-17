@@ -77,7 +77,7 @@ cli notify (rssconfig, jiraconfig) s = do
       "add" -> do
         addCli (rssconfig, jiraconfig) . unwords . tail . words $ s
         updateCli notify rssconfig
-        updateCli notify jiraconfig
+        updateJiraCli notify jiraconfig
         return False
 
       "del" -> do
