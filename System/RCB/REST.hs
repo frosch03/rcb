@@ -13,6 +13,7 @@ module System.RCB.REST
 where
 
 import System.RCB.Room
+import System.RCB.Configuration (rct_userId, rct_authTk, rct_domain, rct_username)
 import System.RCB.Plugins.RSS.RssConfig.Datatype
 import System.RCB.Plugins.RSS.RssConfig.Modifiers
 import System.RCB.Plugins.RSS.RssConfig.PushDescriptors
@@ -36,13 +37,6 @@ import Text.ParserCombinators.Parsec
 import Text.Parsec.Perm
 
     
-domain :: String
--- domain = "the server domain"
-
-userId, authTk :: String
--- userId = "Uncomment and add sensible content"
--- authTk = "Uncomment and add sensible content"
-
 
 data Presence = Offline | Online
               deriving (Show, Read)
@@ -145,11 +139,11 @@ x :: String -> Request
 x s =
     defaultRequest
     { method = BSC8.pack "GET"
-    , host = BSC8.pack $ domain
+    , host = BSC8.pack $ rct_domain
     , path = BSC8.pack $ "/api/v1/" ++ s
     , requestHeaders =
-        [ (mk $ BSC8.pack "X-User-Id",    BSC8.pack userId)
-        , (mk $ BSC8.pack "X-Auth-Token", BSC8.pack authTk)
+        [ (mk $ BSC8.pack "X-User-Id",    BSC8.pack rct_userId)
+        , (mk $ BSC8.pack "X-Auth-Token", BSC8.pack rct_authTk)
         ]
     }
 
@@ -169,7 +163,7 @@ fillRSSRoomIDs rssconfig = do
   let resp = (read . LBSC8.unpack . responseBody $ resp_) :: RestResponse
       ims  = restResponse_ims resp
       rssusrs  = Prelude.map room_name $ allRoomsUniq rsscfg
-  rrids <- mapM (directMessageRoomId ims "ENTER BOT NAME HERE") rssusrs
+  rrids <- mapM (directMessageRoomId ims rct_username) rssusrs
   let rrtois = Prelude.zip rssusrs rrids
       newrsscfg = updateRooms rsscfg rrtois
   putMVar rssconfig newrsscfg
@@ -181,7 +175,7 @@ fillJiraRoomIDs jiraconfig = do
   let resp = (read . LBSC8.unpack . responseBody $ resp_) :: RestResponse
       ims  = restResponse_ims resp 
       jirausrs = Prelude.map room_name $ allJiraRoomsUniq jiracfg
-  jrids <- mapM (directMessageRoomId ims "ENTER BOT NAME HERE") jirausrs
+  jrids <- mapM (directMessageRoomId ims rct_username) jirausrs
   let jrtois = Prelude.zip jirausrs jrids
       newjiracfg = updateJiraRooms jiracfg jrtois
   putMVar jiraconfig newjiracfg
