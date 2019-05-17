@@ -1,13 +1,62 @@
 #+Title: Functional Reactive Rocket.Chat Bot
 
 * Description
-The following implementation is a simple implementation of a
-rocket.chat client that can work as a chat bot. 
+The following implementation is an implementation of a rocket.chat
+client that can act as a chat bot and is called _rcb_.
 
-It is written in the functional reactive programming style with the
-help of haskells [[https://wiki.haskell.org/Yampa][yampa]] framework
+It is intended as a pice of software to help understand how to work in
+a functional reactive programming style. This style is introduced by
+e.g. haskells [[https://wiki.haskell.org/Yampa][yampa]] framework. rcb is ordered in plugins, that run in
+seperate threads and are designed around yampas `reactimate` function.
+
+`reactimate` takes four functions following a defined function
+signature, used for these tasks:
+- initialize
+- sense
+- process
+- actuate 
+It initializes with the init function and then loops a sense call,
+followd by process and that result by actuate.
+
+Currently there are three plugins used:
+- CLI :: a set of commands, the bot is able to recognize and act in a
+         defined way (e.g. return the latest entry of an .rss-feed)
+- RSS :: poll a set of .rss-feeds and send a message to a list of
+         recipients that contains the latest item of the feed, if that
+         has not been send yet
+- REST :: poll the result of a REST call _currently_ of a jira query
+          language call and send a message to a list of recipients
+          that contains the latest item of the result, if that has not
+          been send yet; this plugin is also called JIRA
+
+There is a global configuration as well as a configuration for each
+plugin. Example config files are provided as:
+`Configuration.lhs.sample`.
+
 
 * Configuration
 Just copy the attached [[https://github.com/frosch03/rct/blob/master/Configuration.lhs.sample][sample configuration]] into the file
 `Configuration.lhs` and enter each of the empty values with a
 meaningful one
+
+** global config
+
+Here you configure the server address and port as well as the
+path. Then you define the credentials of the bots account. _Currently_
+you need to define the users id as subscription value, as the bot
+subscribes to that channel and therefore recognizes everything that
+ist send to that account. 
+
+You also define the location of where the bot's plugins can store it's
+persistent data.
+
+** RSS config
+
+_Currently_ here are the rss commands are defined, together with the
+locations of the .rss-feeds that are polled in the also given
+frequency.
+
+** REST config
+
+Here are the list of jqls defined, that shall be polled each defined
+intervall, together with the list of recipients. 
