@@ -23,6 +23,13 @@ The password is stored within the rct_password variable
 
 > rct_password = ""
 
+> rct_domain :: String
+> rct_domain = ""
+
+> rct_userId, rct_authTk :: String
+> rct_userId = ""
+> rct_authTk = ""
+
 
 Another userfull value for now is the user id of the user one want's
 to subscribe to

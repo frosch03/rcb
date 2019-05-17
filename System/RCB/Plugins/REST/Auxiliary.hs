@@ -17,6 +17,7 @@ import System.RCB.IRocketify
 import System.RCB.Auxiliary
 import System.RCB.Configuration
 import System.RCB.Plugins.REST.JiraConfig
+import System.RCB.Plugins.REST.Configuration (jira_username, jira_password, jira_host)
 
 import qualified Data.ByteString.Char8 as BSC8
 import qualified Data.ByteString.Lazy as LBS
@@ -31,29 +32,26 @@ import Data.Maybe
 import Data.List
 import System.IO
 
-username = "" -- bad bad bad :-)
-password = "" -- bad bad bad :-)
-
 postPOST :: String -> Request
 postPOST s =
     defaultRequest
     { method = BSC8.pack "POST"
-    , host = BSC8.pack $ "jira.frosch03.de" -- domain
+    , host = BSC8.pack $ jira_host -- domain
     , secure = False
     , path = BSC8.pack $ "/rest" ++ s
     , requestHeaders =
         [ (mk $ BSC8.pack "content-type", BSC8.pack "application/json")
         ]
     , requestBody =
-        (RequestBodyBS $ BSC8.pack $ "{ \"username\": \"" ++ username ++ "\","
-                                     ++"\"password\": \"" ++ password ++ "\" }")
+        (RequestBodyBS $ BSC8.pack $ "{ \"username\": \"" ++ jira_username ++ "\","
+                                     ++"\"password\": \"" ++ jira_password ++ "\" }")
     }
 
 getGET :: CookieJar -> String -> Request
 getGET cj s =
     defaultRequest
     { method = BSC8.pack "GET"
-    , host = BSC8.pack $ "jira.frosch03.de" -- domain
+    , host = BSC8.pack $ jira_host -- domain
     , secure = False
     , path = BSC8.pack $ "/rest" ++ s
     , cookieJar = Just cj
@@ -64,7 +62,7 @@ getByKey (JSObject obj) key = lookup key (fromJSObject obj)
 getByKey _ _ = Nothing
 
 sdlFromIssue :: JSValue -> (String, String, String)
-sdlFromIssue jsv = (summary, "http://localhost/browse/" ++ key, description)
+sdlFromIssue jsv = (summary, "http://" ++ jira_host ++ "/browse/" ++ key, description)
     where
       mKey    = getByKey jsv "key"
       mFields = getByKey jsv "fields"
@@ -91,7 +89,7 @@ getIssue s = do
       rDescription = maybe (Error "ERROR: Can't find Description") readJSON mDescription :: Result String
       summary     = either id id $ resultToEither rSummary
       description = either id id $ resultToEither rDescription
-  return (summary, "http://localhost/browse/" ++ s, description)
+  return (summary, "http://" ++ jira_host ++ "/browse/" ++ s, description)
 
 searchJql :: String -> IO [(String, String, String)]
 searchJql s = do
