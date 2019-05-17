@@ -41,7 +41,7 @@ meaningful one
 
 ** global config
 
-Here you configure the server address and port as well as the
+[[file:System/RCB/Configuration.lhs.sample][Here]] you configure the server address and port as well as the
 path. Then you define the credentials of the bots account. _Currently_
 you need to define the users id as subscription value, as the bot
 subscribes to that channel and therefore recognizes everything that
@@ -52,11 +52,11 @@ persistent data.
 
 ** RSS config
 
-_Currently_ here are the rss commands are defined, together with the
+_Currently_ [[file:System/RCB/Plugins/RSS/Configuration.lhs.sample][here]] are the rss commands are defined, together with the
 locations of the .rss-feeds that are polled in the also given
 frequency.
 
 ** REST config
 
-Here are the list of jqls defined, that shall be polled each defined
+[[file:System/RCB/Plugins/REST/Configuration.lhs.sample][Here]] are the list of jqls defined, that shall be polled each defined
 intervall, together with the list of recipients. 
