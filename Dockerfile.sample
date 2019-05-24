@@ -1,0 +1,13 @@
+FROM haskell:latest
+
+RUN apt-get update
+RUN apt-get -y install openssl libssl-dev
+
+COPY ./ /opt/server
+WORKDIR /opt/server
+
+RUN cabal update
+
+CMD ls * -alh
+RUN cabal install
+CMD /root/.cabal/bin/rcb
