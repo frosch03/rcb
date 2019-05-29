@@ -1,0 +1,9 @@
+FROM rcb-img:latest
+
+WORKDIR /opt/server
+RUN mkdir -p /srv/rcb
+RUN touch /srv/rcb/.rctRssConfig
+RUN touch /srv/rcb/.rctJiraConfig
+
+RUN ghc -optl-pthread -static -threaded -o /root/rcb -main-is System.RCB.RCB System/RCB/RCB.hs
+CMD /root/rcb
