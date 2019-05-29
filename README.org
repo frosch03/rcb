@@ -33,7 +33,6 @@ There is a global configuration as well as a configuration for each
 plugin. Example config files are provided as:
 `Configuration.lhs.sample`.
 
-
 * Configuration
 Just copy the attached [[https://github.com/frosch03/rct/blob/master/Configuration.lhs.sample][sample configuration]] into the file
 `Configuration.lhs` and enter each of the empty values with a
@@ -59,4 +58,46 @@ frequency.
 ** REST config
 
 [[file:System/RCB/Plugins/REST/Configuration.lhs.sample][Here]] are the list of jqls defined, that shall be polled each defined
-intervall, together with the list of recipients. 
+intervall, together with the list of recipients.
+
+* Installation
+
+** Clone the Repo
+`git clone https://github.com/frosch03/rcb.git`
+
+** Configure
+1. Search for sample configurations: \\
+   `find ./ -name "Configuration.lhs.sample"`
+2. Rename them each to `Configration.lhs` and fill the values inside
+   with data
+
+** Install the dependancies
+`cabal install`
+
+** Build the executable
+`cabal build`
+
+** Run the chat bot
+`./dist/build/rcb/rcb`
+
+* Installation within Docker
+
+** Create the container that compiles the rcbot
+Rename `Dockerfile.sample` to `Dockerfile` and change settings if
+needed.
+
+The image is derived from haskell:latest and necassary dependancies
+for compilation will be installed: \\
+
+`docker build -t rcb-img -f Dockerfile .`
+
+** Create the container that runs the rcbot
+Rename `Dockerfile.fast.sample` to `Dockerfile.fast` and change
+settings if needed. Then: \\
+
+`docker build -t rcbot -f Dockerfile.fast .`
+
+** Run the container
+Now one can just run that rcbot container with: \\
+
+`docker run -d --rm --name rcbot rcbot`
