@@ -26,7 +26,6 @@ import Control.Concurrent.MVar
 import Network.HTTP.Conduit
 import Network.HTTP.Types.Status
 import Data.CaseInsensitive (mk)
-import Text.Regex.PCRE
 import Text.JSON
 import Data.Maybe
 import Data.List

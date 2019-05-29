@@ -1,0 +1,131 @@
+name:                librcb
+version:             0.9.0
+synopsis:            A chat bot lib that is able to talk to rocket.chat and can be programmed via plugins. 
+-- description:
+license:             BSD3
+license-file:        LICENSE
+author:              Matthias Brettschneider
+maintainer:          frosch03@frosch03.de
+-- copyright:
+-- category:
+build-type:          Simple
+extra-source-files:  CHANGELOG.md
+cabal-version:       >=1.10
+
+library
+  exposed-modules:
+      Data.RocketChat.AuxiliaryParsers
+      Data.RocketChat.Message
+      Data.RocketChat.Message.AddedField
+      Data.RocketChat.Message.Algo
+      Data.RocketChat.Message.ChangedField
+      Data.RocketChat.Message.ChangedField.ChangedFieldArgs
+      Data.RocketChat.Message.ChangedField.Datatype
+      Data.RocketChat.Message.ChangedField.Instances
+      Data.RocketChat.Message.ChangedField.NotificationType
+      Data.RocketChat.Message.ChangedField.Parser
+      Data.RocketChat.Message.Collection
+      Data.RocketChat.Message.Constructors
+      Data.RocketChat.Message.Datatype
+      Data.RocketChat.Message.Instances
+      Data.RocketChat.Message.Method
+      Data.RocketChat.Message.Parser
+      Data.RocketChat.Message.ResultField
+      Data.RocketChat.Message.ResultField.AuthType
+      Data.RocketChat.Message.ResultField.Datatype
+      Data.RocketChat.Message.ResultField.Instances
+      Data.RocketChat.Message.ResultField.Parser
+      Data.RocketChat.Message.Write
+      System.RCB.Auxiliary
+      System.RCB.Configuration
+      System.RCB.IAscii
+      System.RCB.IRocketify
+      System.RCB.Plugins.REST.Auxiliary
+      System.RCB.Plugins.REST.Configuration
+      System.RCB.Plugins.REST.Jira
+      System.RCB.Plugins.REST.JiraConfig
+      System.RCB.Plugins.REST.Modifiers
+      System.RCB.Plugins.RSS.Auxiliary
+      System.RCB.Plugins.RSS.CLI
+      System.RCB.Plugins.RSS.Configuration
+      System.RCB.Plugins.RSS.ITransformable
+      System.RCB.Plugins.RSS.Push
+      System.RCB.Plugins.RSS.Reader
+      System.RCB.Plugins.RSS.RssConfig
+      System.RCB.Plugins.RSS.RssConfig.Datatype
+      System.RCB.Plugins.RSS.RssConfig.FeedDescriptor
+      System.RCB.Plugins.RSS.RssConfig.FeedTransformer
+      System.RCB.Plugins.RSS.RssConfig.FeedTransformer.Datatype
+      System.RCB.Plugins.RSS.RssConfig.FeedTransformer.Instances
+      System.RCB.Plugins.RSS.RssConfig.Instances
+      System.RCB.Plugins.RSS.RssConfig.Modifiers
+      System.RCB.Plugins.RSS.RssConfig.PushDescriptors
+      System.RCB.RCB
+      System.RCB.REST
+      System.RCB.Room
+  -- other-modules:
+  -- other-extensions:
+  hs-source-dirs:
+      src
+  build-depends: base >=4.7 && <5
+               , http-conduit
+               , aeson
+               , connection
+               , case-insensitive
+               , http-types
+               -- , regex-pcre
+               , text
+               , cmdargs
+               , time
+               , parsec
+               , bytestring
+               -- , pandoc
+               , Yampa
+               -- , orgmode-pars
+               , cryptohash-sha256
+               , websockets
+               , HTTP
+               , network
+               , wuss
+               , tagsoup
+               , http-streams
+               , utf8-string
+               , json
+                       
+  -- hs-source-dirs:
+  default-language:    Haskell2010
+
+executable rcb
+  main-is: Main.hs
+  other-modules:
+      Paths_librcb
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends: base >=4.7 && <5
+               , http-conduit
+               , aeson
+               , connection
+               , case-insensitive
+               , http-types
+               -- , regex-pcre
+               , text
+               , cmdargs
+               , time
+               , parsec
+               , bytestring
+               -- , pandoc
+               , Yampa
+               -- , orgmode-pars
+               , cryptohash-sha256
+               , websockets
+               , HTTP
+               , network
+               , wuss
+               , tagsoup
+               , http-streams
+               , utf8-string
+               , json
+               , librcb
+  default-language: Haskell2010
+
