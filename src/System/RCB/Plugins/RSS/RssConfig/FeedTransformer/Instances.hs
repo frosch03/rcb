@@ -1,14 +1,3 @@
--------------------------------------------------------------------------------
--- | Module      :  System.RCB.Plugins.RSS.RssConfig.FeedTransformer.Instances
---   Copyright   :  (c) Matthias Brettschneider 2019
---   License     :  as-is
---
---   Maintainer  :  frosch03@gmail.com
---   Stability   :  unstable
---   Portability :  unportable
---
--------------------------------------------------------------------------------
-
 module System.RCB.Plugins.RSS.RssConfig.FeedTransformer.Instances
 where
 
@@ -16,6 +5,7 @@ import System.RCB.Plugins.RSS.RssConfig.FeedTransformer.Datatype
 import System.RCB.Plugins.RSS.ITransformable
 
 import Data.Monoid
+import Data.Semigroup
 import Text.ParserCombinators.Parsec
 
 
@@ -34,22 +24,30 @@ instance Transformable a => Transformable (Maybe a) where
     transform (Just x) = transform x
     transform Nothing  = id
 
+instance Semigroup TTitle where
+    (<>) = const
+
+instance Semigroup TLink where
+    (<>) = const
+
+instance Semigroup TDescription where
+    (<>) = const
+
+instance Semigroup FeedTransformer where
+    (<>) (FeedTransformer fTx fLx fDx) (FeedTransformer fTy fLy fDy) =
+        (FeedTransformer (mappend fTx fTy) (mappend fLx fLy) (mappend fDx fDy))
+
 instance Monoid TTitle where
     mempty = Tempty
-    mappend = const
 
 instance Monoid TLink where
     mempty = Lempty
-    mappend = const
 
 instance Monoid TDescription where
     mempty = Dempty
-    mappend = const
 
 instance Monoid FeedTransformer where
     mempty = FeedTransformer Nothing Nothing Nothing
-    mappend (FeedTransformer fTx fLx fDx) (FeedTransformer fTy fLy fDy) =
-        (FeedTransformer (mappend fTx fTy) (mappend fLx fLy) (mappend fDx fDy))
 
 
 
