@@ -9,7 +9,7 @@ a functional reactive programming style. This style is introduced by
 e.g. haskells [[https://wiki.haskell.org/Yampa][yampa]] framework. rcb is ordered in plugins, that run in
 seperate threads and are designed around yampas `reactimate` function.
 
-`reactimate` takes four functions following a defined function
+=reactimate= takes four functions following a defined function
 signature, used for these tasks:
 - initialize
 - sense
@@ -31,11 +31,11 @@ Currently there are three plugins used:
 
 There is a global configuration as well as a configuration for each
 plugin. Example config files are provided as:
-`Configuration.lhs.sample`.
+=Configuration.lhs.sample=.
 
 * Configuration
 Just copy the attached [[https://github.com/frosch03/rct/blob/master/Configuration.lhs.sample][sample configuration]] into the file
-`Configuration.lhs` and enter each of the empty values with a
+=Configuration.lhs= and enter each of the empty values with a
 meaningful one
 
 ** global config
@@ -63,41 +63,58 @@ intervall, together with the list of recipients.
 * Installation
 
 ** Clone the Repo
-`git clone https://github.com/frosch03/rcb.git`
+#+BEGIN_SRC sh
+git clone https://github.com/frosch03/rcb.git
+#+END_SRC
 
 ** Configure
 1. Search for sample configurations: \\
-   `find ./ -name "Configuration.lhs.sample"`
-2. Rename them each to `Configration.lhs` and fill the values inside
+   =find ./ -name "Configuration.lhs.sample"=
+2. Rename them each to =Configration.lhs= and fill the values inside
    with data
 
 ** Install the dependancies
-`cabal install`
+#+BEGIN_SRC sh
+cabal install
+#+END_SRC
 
 ** Build the executable
-`cabal build`
+#+BEGIN_SRC sh
+cabal build
+#+END_SRC
 
 ** Run the chat bot
-`./dist/build/rcb/rcb`
+#+BEGIN_SRC sh
+./dist/build/rcb/rcb
+#+END_SRC
 
 * Installation within Docker
 
 ** Create the container that compiles the rcbot
-Rename `Dockerfile.sample` to `Dockerfile` and change settings if
+Rename =Dockerfile.sample= to =Dockerfile= and change settings if
 needed.
 
 The image is derived from haskell:latest and necassary dependancies
 for compilation will be installed: \\
 
-`docker build -t rcb-img -f Dockerfile .`
+#+BEGIN_SRC sh
+docker build -t rcb-img -f Dockerfile .
+#+END_SRC
+
 
 ** Create the container that runs the rcbot
-Rename `Dockerfile.fast.sample` to `Dockerfile.fast` and change
+Rename =Dockerfile.fast.sample= to =Dockerfile.fast= and change
 settings if needed. Then: \\
 
-`docker build -t rcbot -f Dockerfile.fast .`
+#+BEGIN_SRC sh
+docker build -t rcbot -f Dockerfile.fast .
+#+END_SRC
+
 
 ** Run the container
 Now one can just run that rcbot container with: \\
 
-`docker run -d --rm --name rcbot rcbot`
+#+BEGIN_SRC sh
+docker run -d --rm --name rcbot rcbot
+#+END_SRC
+
