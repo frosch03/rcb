@@ -69,8 +69,11 @@ git clone https://github.com/frosch03/rcb.git
 #+END_SRC
 
 ** Configure
-1. Search for sample configurations: \\
-   =find ./ -name "Configuration.lhs.sample"=
+1. Search for sample configurations:
+   #+BEGIN_SRC sh
+   find ./ -name "Configuration.lhs.sample"
+   #+END_SRC
+
 2. Rename them each to =Configration.lhs= and fill the values inside
    with data
 
