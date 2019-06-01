@@ -67,6 +67,14 @@ getText (Changed _ _ (CF _ ((CFA title text (_, rid, _, t, msg)):_))) =
 getText _ =
     Nothing
     
+doUpdate :: (String -> IO ()) -> (MVar RssConfig, MVar JiraConfig) -> IO ()
+doUpdate notify (rssconfig, jiraconfig) = do
+  putStrLn "updateCli rssconfig"
+  updateCli notify rssconfig
+  putStrLn "updateCli jiraconfig"
+  updateJiraCli notify jiraconfig
+  return ()
+
 
 cli :: (String -> IO ()) -> (MVar RssConfig, MVar JiraConfig) -> String -> IO Bool
 cli notify (rssconfig, jiraconfig) s = do
@@ -76,8 +84,7 @@ cli notify (rssconfig, jiraconfig) s = do
  
       "add" -> do
         addCli (rssconfig, jiraconfig) . unwords . tail . words $ s
-        updateCli notify rssconfig
-        updateJiraCli notify jiraconfig
+        doUpdate notify (rssconfig, jiraconfig)
         return False
 
       "del" -> do
@@ -100,10 +107,7 @@ cli notify (rssconfig, jiraconfig) s = do
         return False 
 
       "update" -> do
-        putStrLn "updateCli rssconfig"
-        updateCli notify rssconfig
-        putStrLn "updateCli jiraconfig"
-        updateJiraCli notify jiraconfig
+        doUpdate notify (rssconfig, jiraconfig)
         return False
 
       "help" -> do
