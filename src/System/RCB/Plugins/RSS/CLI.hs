@@ -31,7 +31,7 @@ import Network.WebSockets.Connection (Connection(..))
 import Control.Monad (when)
 
 
-process :: SF Message (Maybe (String, String))
+process :: SF Message (Maybe (String, String, String))
 process =
     arr $ getText
 
@@ -56,14 +56,14 @@ sense c _ = do
        else return (0.0, Just msg)
 
 
-actuate :: MVar Bool -> (MVar Bool,MVar Bool,MVar Bool) -> (MVar RssConfig, MVar JiraConfig) -> Connection -> Bool -> Maybe (RoomId, String) -> IO Bool
+actuate :: MVar Bool -> (MVar Bool,MVar Bool,MVar Bool) -> (MVar RssConfig, MVar JiraConfig) -> Connection -> Bool -> Maybe (RoomId, String, String) -> IO Bool
 actuate _ _ _ c _ Nothing = return False
-actuate exit (exitted,exittedJ,exittedR) configs c _ (Just (rid, msg)) = do
+actuate exit (exitted,exittedJ,exittedR) configs c _ (Just (rid, username, msg)) = do
     ext <- readMVar exit
     mid <- secondsOfTheDay
     let sendMsg :: String -> IO ()
         sendMsg = send c . mkSendMsg mid rid
-    res <- cli sendMsg configs msg
+    res <- cli username sendMsg configs msg
     when res $ do
       putStrLn $ "CLI:  Shutting down"
       takeMVar exitted >> putMVar exitted True

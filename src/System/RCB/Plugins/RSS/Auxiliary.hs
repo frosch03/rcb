@@ -61,29 +61,43 @@ send :: Connection -> Message -> IO ()
 send c =
     sendTextData c . pack . ascii
 
-getText :: Message -> Maybe (String, String)
-getText (Changed _ _ (CF _ ((CFA title text (_, rid, _, t, msg)):_))) =
-    Just (rid, msg)
+getText :: Message -> Maybe (String, String, String)
+getText (Changed _ _ (CF _ ((CFA title text (_, rid, (_, username, _), t, msg)):_))) =
+    Just (rid, username, msg)
 getText _ =
     Nothing
     
+doUpdate :: (String -> IO ()) -> (MVar RssConfig, MVar JiraConfig) -> IO ()
+doUpdate notify (rssconfig, jiraconfig) = do
+  putStrLn "updateCli rssconfig"
+  updateCli notify rssconfig
+  putStrLn "updateCli jiraconfig"
+  updateJiraCli notify jiraconfig
+  return ()
 
-cli :: (String -> IO ()) -> (MVar RssConfig, MVar JiraConfig) -> String -> IO Bool
-cli notify (rssconfig, jiraconfig) s = do
+
+cli :: String -> (String -> IO ()) -> (MVar RssConfig, MVar JiraConfig) -> String -> IO Bool
+cli username notify (rssconfig, jiraconfig) s = do
     let amount = maybe 1 id $ countFromMsg s
     case (head . words $ s) of
       "exit" -> return True
  
       "add" -> do
         addCli (rssconfig, jiraconfig) . unwords . tail . words $ s
-        updateCli notify rssconfig
-        updateJiraCli notify jiraconfig
+        doUpdate notify (rssconfig, jiraconfig)
         return False
 
       "del" -> do
         delCli (rssconfig, jiraconfig) . unwords . tail . words $ s
         readMVar rssconfig >>= notify . rctify
         readMVar jiraconfig >>= notify . rctify
+        return False
+
+      "subscribe" -> do
+        let rest = unwords . drop 2 . words $ s
+            cmd  = head . tail . words $ s
+        addCli (rssconfig, jiraconfig) $ cmd ++ " " ++ username ++ " " ++ rest
+        doUpdate notify (rssconfig, jiraconfig)
         return False
 
       "config" -> do
@@ -100,10 +114,7 @@ cli notify (rssconfig, jiraconfig) s = do
         return False 
 
       "update" -> do
-        putStrLn "updateCli rssconfig"
-        updateCli notify rssconfig
-        putStrLn "updateCli jiraconfig"
-        updateJiraCli notify jiraconfig
+        doUpdate notify (rssconfig, jiraconfig)
         return False
 
       "help" -> do
@@ -245,21 +256,23 @@ helpMsg =
     , "Help Commands\\n"
     , "=============\\n"
     , "\\n"
+    , "subscribe push <URL :: String>            - subscribe yourselfe to updates of a given url\\n"
+    , "subscribe jql  <URL :: String>            - subscribe yourselfe to updates of a given url\\n"
     , "add command <Keyword :: String> <URL :: String>     - add a new rss command\\n"
     , "add push <Room :: String> <URL :: String> [Options] - add a feed to be pushed to the room\\n"
     ] ++ pushOptionHelpMsg ++ 
-    [ "add jql <Room :: String> <JQL :: String> - add a feed to be pushed to the room\\n"
-    , "del command <Number :: Int>              - remove the rss command with the number\\n"
-    , "del push <Number :: Int>                 - remove the push to room with the number\\n"
-    , "del jql <Number :: Int>                  - remove the jql of room with the number\\n"
-    , "config                                   - show both current configurations\\n"
-    , "rssconfig                                - show the current rss configuration\\n"
-    , "jiraconfig                               - show the current jira configuration\\n"
-    , "update                                   - fill in the room id for new room entrys\\n"
-    , "store                                    - storing the current configurations into local files\\n"
-    , "restore                                  - restoring from local files the configurations \\n"
-    , "exit                                     - shutdown the bot\\n"
-    , "help                                     - display this screen\\n"
+    [ "add jql  <Room :: String> <JQL :: String> - add a feed to be pushed to the room\\n"
+    , "del command <Number :: Int>               - remove the rss command with the number\\n"
+    , "del push    <Number :: Int>               - remove the push to room with the number\\n"
+    , "del jql     <Number :: Int>               - remove the jql of room with the number\\n"
+    , "config                                    - show both current configurations\\n"
+    , "rssconfig                                 - show the current rss configuration\\n"
+    , "jiraconfig                                - show the current jira configuration\\n"
+    , "update                                    - fill in the room id for new room entrys\\n"
+    , "store                                     - storing the current configurations into local files\\n"
+    , "restore                                   - restoring from local files the configurations \\n"
+    , "exit                                      - shutdown the bot\\n"
+    , "help                                      - display this screen\\n"
     , "\\n"
     , "```"
     ]
