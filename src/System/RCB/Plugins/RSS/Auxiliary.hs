@@ -61,9 +61,9 @@ send :: Connection -> Message -> IO ()
 send c =
     sendTextData c . pack . ascii
 
-getText :: Message -> Maybe (String, String)
-getText (Changed _ _ (CF _ ((CFA title text (_, rid, _, t, msg)):_))) =
-    Just (rid, msg)
+getText :: Message -> Maybe (String, String, String)
+getText (Changed _ _ (CF _ ((CFA title text (_, rid, (_, username, _), t, msg)):_))) =
+    Just (rid, username, msg)
 getText _ =
     Nothing
     
@@ -76,8 +76,8 @@ doUpdate notify (rssconfig, jiraconfig) = do
   return ()
 
 
-cli :: (String -> IO ()) -> (MVar RssConfig, MVar JiraConfig) -> String -> IO Bool
-cli notify (rssconfig, jiraconfig) s = do
+cli :: String -> (String -> IO ()) -> (MVar RssConfig, MVar JiraConfig) -> String -> IO Bool
+cli username notify (rssconfig, jiraconfig) s = do
     let amount = maybe 1 id $ countFromMsg s
     case (head . words $ s) of
       "exit" -> return True
@@ -91,6 +91,13 @@ cli notify (rssconfig, jiraconfig) s = do
         delCli (rssconfig, jiraconfig) . unwords . tail . words $ s
         readMVar rssconfig >>= notify . rctify
         readMVar jiraconfig >>= notify . rctify
+        return False
+
+      "subscribe" -> do
+        let rest = unwords . drop 2 . words $ s
+            cmd  = head . tail . words $ s
+        addCli (rssconfig, jiraconfig) $ cmd ++ " " ++ username ++ " " ++ rest
+        doUpdate notify (rssconfig, jiraconfig)
         return False
 
       "config" -> do
